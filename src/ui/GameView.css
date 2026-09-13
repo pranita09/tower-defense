@@ -1,0 +1,120 @@
+.game {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--c-bg);
+}
+
+.game__canvas {
+  width: 100%;
+  height: 100%;
+  /* Input coordinates are read in CSS pixels; never let the browser scale the
+     backing store, or clicks and drawing would disagree. */
+  touch-action: none;
+}
+
+.game__hud {
+  position: absolute;
+  display: flex;
+  gap: 0.6rem;
+  /* The HUD floats over the canvas, so only its children capture input. */
+  pointer-events: none;
+}
+
+.game__hud > * {
+  pointer-events: auto;
+}
+
+.game__hud--top-left {
+  top: 0.9rem;
+  left: 0.9rem;
+}
+
+.game__hud--top-right {
+  top: 0.9rem;
+  right: 0.9rem;
+}
+
+.game__hud--bottom {
+  bottom: 0.9rem;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+}
+
+.game__brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.game__brand-mark {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.game__brand-note {
+  font-size: 0.68rem;
+  color: var(--c-text-dim);
+}
+
+.game__load {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.game__load-label {
+  margin-right: 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.game__load-button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--c-text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.game__load-button:hover {
+  color: var(--c-text);
+}
+
+.game__load-button.is-active {
+  border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--c-accent) 20%, transparent);
+  color: var(--c-text);
+}
+
+.game__paused {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.5rem 1.4rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c-surface) 80%, transparent);
+  backdrop-filter: blur(4px);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+  pointer-events: none;
+}
