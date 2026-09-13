@@ -1,0 +1,57 @@
+:root {
+  /* Surfaces */
+  --c-bg: #0b0f17;
+  --c-surface: #121927;
+  --c-surface-raised: #1a2334;
+  --c-border: #263449;
+
+  /* Text */
+  --c-text: #e6ecf5;
+  --c-text-dim: #8fa0b8;
+
+  /* Accents */
+  --c-accent: #4cc9f0;
+  --c-gold: #ffc94d;
+  --c-health: #ff5d5d;
+  --c-good: #5ddf8f;
+  --c-warn: #ffa94d;
+
+  --radius: 8px;
+  --font-ui:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-ui);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* The game canvas owns its own pixel scaling, so never let the browser
+   interpolate it or hand it default inline-element spacing. */
+canvas {
+  display: block;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}

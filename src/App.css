@@ -1,0 +1,35 @@
+.app-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, #17233a 0%, var(--c-bg) 60%);
+}
+
+.app-placeholder {
+  text-align: center;
+  max-width: 34rem;
+  padding: 2rem;
+}
+
+.app-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+
+.app-title {
+  margin: 0.35rem 0 1rem;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-note {
+  margin: 0;
+  color: var(--c-text-dim);
+  line-height: 1.6;
+}
