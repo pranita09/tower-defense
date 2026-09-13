@@ -1,14 +1,19 @@
 import { Rng } from '../core/rng';
 import {
   applyArmor,
+  BOSS_ARMOR_BONUS,
   BOSS_BOUNTY_MULTIPLIER,
   BOSS_DAMAGE,
   BOSS_HEALTH_MULTIPLIER,
   BOSS_RADIUS,
   BOSS_SCORE_MULTIPLIER,
+  BOSS_SPEED_FACTOR,
   ENEMY_DEFS,
 } from '../data/enemies';
 import {
+  AIR_LENGTH,
+  airPathX,
+  airPathY,
   BASE_POSITION,
   GRID_COLS,
   GRID_ROWS,
@@ -52,6 +57,9 @@ const PROJECTILE_HIT_RADIUS = 9;
 const PARTICLES_PER_KILL = 6;
 const SHAKE_DECAY = 3.4;
 
+/** How far a tesla arc can jump from one enemy to the next. */
+const CHAIN_JUMP_RANGE = 74;
+
 /** Build time before the first wave, and between waves. */
 const OPENING_REST_SECONDS = 20;
 const REST_SECONDS = 9;
@@ -78,6 +86,7 @@ class NaiveEnemy {
   slowTimer = 0;
   slowFactor = 0;
   boss = false;
+  flying = false;
   alive = true;
   typeId = 0;
 }
@@ -112,8 +121,19 @@ class NaiveProjectile {
   slowDuration = 0;
   age = 0;
   kind = 0;
+  ignoresArmor = false;
   target: NaiveEnemy | null = null;
   alive = true;
+}
+
+/** A tesla arc, which is drawn for a moment after the damage has landed. */
+class NaiveArc {
+  x1 = 0;
+  y1 = 0;
+  x2 = 0;
+  y2 = 0;
+  life = 0;
+  color = '#b98cff';
 }
 
 class NaiveParticle {
@@ -149,6 +169,7 @@ export class NaiveSim {
   readonly projectiles: NaiveProjectile[] = [];
   readonly particles: NaiveParticle[] = [];
   readonly damageNumbers: NaiveDamageNumber[] = [];
+  readonly arcs: NaiveArc[] = [];
 
   readonly maxHealth = STARTING_HEALTH;
 
@@ -186,6 +207,7 @@ export class NaiveSim {
     this.projectiles.length = 0;
     this.particles.length = 0;
     this.damageNumbers.length = 0;
+    this.arcs.length = 0;
     this.occupied.fill(-1);
     this.spawnGroups = [];
     this.phase = 'ready';
@@ -339,29 +361,44 @@ export class NaiveSim {
     }
   }
 
-  private spawnEnemy(typeId: number, boss: boolean, startDistance: number): NaiveEnemy {
+  private spawnEnemy(
+    typeId: number,
+    boss: boolean,
+    startDistance: number,
+    healthOverride = 0
+  ): NaiveEnemy {
     const def = ENEMY_DEFS[typeId];
     const wave = getWave(Math.max(1, this.wave));
 
     const enemy = new NaiveEnemy();
     enemy.typeId = typeId;
     enemy.boss = boss;
-    enemy.maxHp = def.health * wave.healthScale * (boss ? BOSS_HEALTH_MULTIPLIER : 1);
+    enemy.flying = def.flying;
+    enemy.maxHp =
+      healthOverride > 0
+        ? healthOverride
+        : def.health * wave.healthScale * (boss ? BOSS_HEALTH_MULTIPLIER : 1);
     enemy.hp = enemy.maxHp;
-    enemy.baseSpeed = def.speed * wave.speedScale * (boss ? 0.55 : 1);
-    enemy.armor = def.armor + wave.armorBonus + (boss ? 6 : 0);
+    enemy.baseSpeed = def.speed * wave.speedScale * (boss ? BOSS_SPEED_FACTOR : 1);
+    enemy.armor = def.armor + wave.armorBonus + (boss ? BOSS_ARMOR_BONUS : 0);
     enemy.bounty = Math.round(def.bounty * wave.bountyScale * (boss ? BOSS_BOUNTY_MULTIPLIER : 1));
     enemy.scoreValue = Math.round(def.score * (boss ? BOSS_SCORE_MULTIPLIER : 1));
     enemy.leakDamage = boss ? BOSS_DAMAGE : def.damage;
     enemy.radius = boss ? BOSS_RADIUS : def.radius;
-
-    const point = samplePath(startDistance);
-    enemy.x = point.x;
-    enemy.y = point.y;
-    enemy.prevX = point.x;
-    enemy.prevY = point.y;
-    enemy.segment = point.segment;
     enemy.traveled = startDistance;
+
+    if (enemy.flying) {
+      enemy.x = airPathX(startDistance);
+      enemy.y = airPathY(startDistance);
+      enemy.segment = 1;
+    } else {
+      const point = samplePath(startDistance);
+      enemy.x = point.x;
+      enemy.y = point.y;
+      enemy.segment = point.segment;
+    }
+    enemy.prevX = enemy.x;
+    enemy.prevY = enemy.y;
 
     this.enemies.push(enemy);
     return enemy;
@@ -382,6 +419,14 @@ export class NaiveSim {
 
       const speed = enemy.baseSpeed * (1 - enemy.slowFactor);
       let remaining = speed * delta;
+
+      if (enemy.flying) {
+        enemy.traveled += remaining;
+        enemy.x = airPathX(enemy.traveled);
+        enemy.y = airPathY(enemy.traveled);
+        if (enemy.traveled >= AIR_LENGTH) this.leak(enemy);
+        continue;
+      }
 
       // Walk waypoint to waypoint, with a square root per step.
       while (remaining > 0 && enemy.segment < PATH.length) {
@@ -415,8 +460,8 @@ export class NaiveSim {
       // course instead of ending the run.
       enemy.segment = 1;
       enemy.traveled = 0;
-      enemy.x = PATH[0].x;
-      enemy.y = PATH[0].y;
+      enemy.x = enemy.flying ? airPathX(0) : PATH[0].x;
+      enemy.y = enemy.flying ? airPathY(0) : PATH[0].y;
       enemy.prevX = enemy.x;
       enemy.prevY = enemy.y;
       return;
@@ -437,7 +482,8 @@ export class NaiveSim {
   private updateTowers(delta: number): void {
     for (let t = 0; t < this.towers.length; t += 1) {
       const tower = this.towers[t];
-      const stats = TOWER_DEFS[tower.typeId].levels[tower.level - 1];
+      const def = TOWER_DEFS[tower.typeId];
+      const stats = def.levels[tower.level - 1];
 
       if (tower.recoil > 0) tower.recoil = Math.max(0, tower.recoil - delta * 5);
       tower.cooldownRemaining -= delta;
@@ -449,6 +495,7 @@ export class NaiveSim {
       for (let e = 0; e < this.enemies.length; e += 1) {
         const enemy = this.enemies[e];
         if (!enemy.alive) continue;
+        if (enemy.flying && !def.targetsAir) continue;
         const dx = enemy.x - tower.x;
         const dy = enemy.y - tower.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -465,6 +512,12 @@ export class NaiveSim {
 
       tower.cooldownRemaining = stats.cooldown;
       tower.recoil = 1;
+      this.shotsFired += 1;
+
+      if (def.hitscan) {
+        this.fireChain(tower, best);
+        continue;
+      }
 
       const projectile = new NaiveProjectile();
       projectile.x = tower.x;
@@ -477,12 +530,56 @@ export class NaiveSim {
       projectile.slowFactor = stats.slowFactor;
       projectile.slowDuration = stats.slowDuration;
       projectile.kind = tower.typeId;
+      projectile.ignoresArmor = def.ignoresArmor;
       projectile.target = best;
       const angle = tower.rotation;
       projectile.vx = Math.cos(angle) * stats.projectileSpeed;
       projectile.vy = Math.sin(angle) * stats.projectileSpeed;
       this.projectiles.push(projectile);
-      this.shotsFired += 1;
+    }
+  }
+
+  /**
+   * Tesla fire: damage lands instantly and jumps to nearby enemies. Another
+   * full scan of the enemy list, once per extra link in the chain.
+   */
+  private fireChain(tower: NaiveTower, first: NaiveEnemy): void {
+    const def = TOWER_DEFS[tower.typeId];
+    const stats = def.levels[tower.level - 1];
+
+    let fromX = tower.x;
+    let fromY = tower.y;
+    let current: NaiveEnemy | null = first;
+    const hit: NaiveEnemy[] = [];
+
+    for (let link = 0; link <= stats.chainTargets && current; link += 1) {
+      const arc = new NaiveArc();
+      arc.x1 = fromX;
+      arc.y1 = fromY;
+      arc.x2 = current.x;
+      arc.y2 = current.y;
+      arc.life = 0.14;
+      arc.color = def.accent;
+      this.arcs.push(arc);
+
+      fromX = current.x;
+      fromY = current.y;
+      hit.push(current);
+      this.damageEnemy(current, stats.damage, def.ignoresArmor, 0, 0);
+
+      const previous: NaiveEnemy = current;
+      current = null;
+      let bestDistance = Infinity;
+      for (let e = 0; e < this.enemies.length; e += 1) {
+        const enemy = this.enemies[e];
+        if (!enemy.alive || hit.includes(enemy)) continue;
+        const dx = enemy.x - previous.x;
+        const dy = enemy.y - previous.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > CHAIN_JUMP_RANGE || distance >= bestDistance) continue;
+        bestDistance = distance;
+        current = enemy;
+      }
     }
   }
 
@@ -531,28 +628,47 @@ export class NaiveSim {
         const dx = enemy.x - projectile.x;
         const dy = enemy.y - projectile.y;
         if (dx * dx + dy * dy > radiusSquared) continue;
-        this.damage(enemy, projectile.damage, projectile);
+        this.damageEnemy(
+          enemy,
+          projectile.damage,
+          projectile.ignoresArmor,
+          projectile.slowFactor,
+          projectile.slowDuration
+        );
       }
     } else {
-      this.damage(target, projectile.damage, projectile);
+      this.damageEnemy(
+        target,
+        projectile.damage,
+        projectile.ignoresArmor,
+        projectile.slowFactor,
+        projectile.slowDuration
+      );
     }
 
     const color = TOWER_DEFS[projectile.kind].accent;
     this.spawnParticles(projectile.x, projectile.y, projectile.splashRadius > 0 ? 7 : 3, color);
   }
 
-  private damage(enemy: NaiveEnemy, amount: number, projectile: NaiveProjectile): void {
-    enemy.hp -= applyArmor(amount, enemy.armor);
+  private damageEnemy(
+    enemy: NaiveEnemy,
+    amount: number,
+    ignoresArmor: boolean,
+    slowFactor: number,
+    slowDuration: number
+  ): void {
+    enemy.hp -= ignoresArmor ? amount : applyArmor(amount, enemy.armor);
 
-    if (projectile.slowFactor > 0) {
-      enemy.slowFactor = Math.max(enemy.slowFactor, projectile.slowFactor);
-      enemy.slowTimer = Math.max(enemy.slowTimer, projectile.slowDuration);
+    if (slowFactor > 0) {
+      enemy.slowFactor = Math.max(enemy.slowFactor, slowFactor);
+      enemy.slowTimer = Math.max(enemy.slowTimer, slowDuration);
     }
 
     if (enemy.hp > 0) return;
 
     enemy.alive = false;
     this.kills += 1;
+    this.splitOnDeath(enemy);
     if (!this.stressTargets) {
       this.gold += enemy.bounty;
       this.score += enemy.scoreValue;
@@ -572,6 +688,26 @@ export class NaiveSim {
       enemy.boss ? 24 : PARTICLES_PER_KILL,
       ENEMY_DEFS[enemy.typeId].accent
     );
+  }
+
+  /** Splitters replace themselves with a burst of smaller, faster enemies. */
+  private splitOnDeath(enemy: NaiveEnemy): void {
+    const def = ENEMY_DEFS[enemy.typeId];
+    if (def.splitInto < 0 || def.splitCount <= 0) return;
+
+    const childHealth = Math.max(1, enemy.maxHp * def.splitHealthFactor);
+    for (let i = 0; i < def.splitCount; i += 1) {
+      // Spread the children slightly along the path so they do not overlap.
+      const offset = (i - (def.splitCount - 1) / 2) * 14;
+      const child = this.spawnEnemy(
+        def.splitInto,
+        false,
+        Math.max(0, enemy.traveled + offset),
+        childHealth
+      );
+      child.slowFactor = enemy.slowFactor;
+      child.slowTimer = enemy.slowTimer;
+    }
   }
 
   private spawnParticles(x: number, y: number, count: number, color: string): void {
@@ -615,6 +751,12 @@ export class NaiveSim {
         continue;
       }
       label.y -= delta * 26;
+    }
+
+    for (let i = this.arcs.length - 1; i >= 0; i -= 1) {
+      const arc = this.arcs[i];
+      arc.life -= delta;
+      if (arc.life <= 0) this.arcs.splice(i, 1);
     }
   }
 
@@ -691,10 +833,15 @@ export class NaiveSim {
     }
 
     if (this.towers.length === 0) return;
+    let guard = targets.projectiles * 4;
     while (this.projectiles.length < targets.projectiles && this.enemies.length > 0) {
+      if (guard-- <= 0) break;
       const tower = this.towers[this.rng.int(this.towers.length)];
+      const def = TOWER_DEFS[tower.typeId];
+      // Hitscan towers never produce projectiles, so they cannot fill the quota.
+      if (def.hitscan) continue;
       const enemy = this.enemies[this.rng.int(this.enemies.length)];
-      const stats = TOWER_DEFS[tower.typeId].levels[tower.level - 1];
+      const stats = def.levels[tower.level - 1];
 
       const projectile = new NaiveProjectile();
       projectile.x = tower.x;
@@ -707,6 +854,7 @@ export class NaiveSim {
       projectile.slowFactor = stats.slowFactor;
       projectile.slowDuration = stats.slowDuration;
       projectile.kind = tower.typeId;
+      projectile.ignoresArmor = def.ignoresArmor;
       projectile.target = enemy;
       projectile.age = this.rng.next() * PROJECTILE_LIFETIME * 0.5;
       this.projectiles.push(projectile);

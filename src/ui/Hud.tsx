@@ -3,9 +3,10 @@ import './Hud.css';
 
 interface HudProps {
   state: GameStateSnapshot | null;
+  highScore: number;
 }
 
-export function Hud({ state }: HudProps) {
+export function Hud({ state, highScore }: HudProps) {
   if (!state) return null;
 
   const healthFraction = Math.max(0, state.health / state.maxHealth);
@@ -14,7 +15,7 @@ export function Hud({ state }: HudProps) {
   return (
     <div className="hud">
       <div className="hud__group">
-        <span className="hud__brand">Bastion</span>
+        <span className="hud__brand">SiegeBound</span>
       </div>
 
       <div className="hud__group hud__group--stats">
@@ -40,6 +41,7 @@ export function Hud({ state }: HudProps) {
         <div className="hud__stat">
           <span className="hud__label">Score</span>
           <span className="hud__value">{state.score.toLocaleString()}</span>
+          {highScore > 0 && <span className="hud__sub">best {highScore.toLocaleString()}</span>}
         </div>
 
         <div className="hud__stat hud__stat--wave">

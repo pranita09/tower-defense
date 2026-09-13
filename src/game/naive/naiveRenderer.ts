@@ -1,17 +1,15 @@
 import { lerp } from '../core/math';
 import type { Camera } from '../core/camera';
-import { ENEMY_ARMORED, ENEMY_DEFS, ENEMY_RUNNER } from '../data/enemies';
 import {
-  BASE_POSITION,
-  GRID_COLS,
-  GRID_ROWS,
-  isBuildable,
-  PATH,
-  TILE_SIZE,
-  WORLD_HEIGHT,
-  WORLD_WIDTH,
-} from '../data/map';
+  ENEMY_ARMORED,
+  ENEMY_DEFS,
+  ENEMY_FLYER,
+  ENEMY_RUNNER,
+  ENEMY_SPLITTER,
+} from '../data/enemies';
+import { BASE_POSITION, TILE_SIZE } from '../data/map';
 import { TOWER_DEFS } from '../data/towers';
+import { paintTerrain } from '../render/terrain';
 import type { CanvasViewport } from '../render/viewport';
 import type { NaiveSim } from './naiveSim';
 
@@ -66,54 +64,17 @@ export class NaiveRenderer {
       dpr * (camera.offsetY + shakeY)
     );
 
-    this.drawTerrain(ctx);
-    this.drawPath(ctx);
+    // Rebuilt from scratch every frame: ~250 tile fills plus four wide stroked
+    // polylines, for a layer that never changes.
+    paintTerrain(ctx);
     this.drawBase(ctx, sim);
     if (hover) this.drawHover(ctx, hover);
     this.drawTowers(ctx, sim);
     this.drawEnemies(ctx, sim, alpha);
     this.drawProjectiles(ctx, sim, alpha);
+    this.drawArcs(ctx, sim);
     this.drawParticles(ctx, sim);
     this.drawDamageNumbers(ctx, sim);
-  }
-
-  /** Redrawn every frame, tile by tile. */
-  private drawTerrain(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = '#111a27';
-    ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-
-    for (let row = 0; row < GRID_ROWS; row += 1) {
-      for (let col = 0; col < GRID_COLS; col += 1) {
-        if (!isBuildable(col, row)) continue;
-        const x = col * TILE_SIZE;
-        const y = row * TILE_SIZE;
-        ctx.fillStyle = (col + row) % 2 === 0 ? '#16202f' : '#141d2b';
-        ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1);
-      }
-    }
-  }
-
-  private drawPath(ctx: CanvasRenderingContext2D): void {
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    ctx.moveTo(PATH[0].x, PATH[0].y);
-    for (let i = 1; i < PATH.length; i += 1) ctx.lineTo(PATH[i].x, PATH[i].y);
-
-    ctx.strokeStyle = '#2a2016';
-    ctx.lineWidth = TILE_SIZE * 1.75;
-    ctx.stroke();
-
-    ctx.strokeStyle = '#3d2f20';
-    ctx.lineWidth = TILE_SIZE * 1.45;
-    ctx.stroke();
-
-    ctx.setLineDash([9, 13]);
-    ctx.strokeStyle = 'rgba(255, 201, 77, 0.16)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.setLineDash([]);
   }
 
   private drawBase(ctx: CanvasRenderingContext2D, sim: NaiveSim): void {
@@ -229,6 +190,14 @@ export class NaiveRenderer {
       ctx.save();
       ctx.translate(x, y);
 
+      if (enemy.flying) {
+        // A shadow below sells the fact that it is above the terrain.
+        ctx.beginPath();
+        ctx.ellipse(2, radius + 7, radius * 0.75, radius * 0.32, 0, 0, TAU);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fill();
+      }
+
       ctx.beginPath();
       if (enemy.typeId === ENEMY_RUNNER) {
         ctx.moveTo(0, -radius);
@@ -237,6 +206,21 @@ export class NaiveRenderer {
         ctx.closePath();
       } else if (enemy.typeId === ENEMY_ARMORED) {
         ctx.roundRect(-radius, -radius, radius * 2, radius * 2, 3);
+      } else if (enemy.typeId === ENEMY_FLYER) {
+        ctx.moveTo(0, -radius);
+        ctx.lineTo(radius, 0);
+        ctx.lineTo(0, radius);
+        ctx.lineTo(-radius, 0);
+        ctx.closePath();
+      } else if (enemy.typeId === ENEMY_SPLITTER) {
+        for (let corner = 0; corner < 6; corner += 1) {
+          const angle = (corner / 6) * TAU;
+          const px = Math.cos(angle) * radius;
+          const py = Math.sin(angle) * radius;
+          if (corner === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
       } else {
         ctx.arc(0, 0, radius, 0, TAU);
       }
@@ -273,6 +257,28 @@ export class NaiveRenderer {
       ctx.arc(x, y, radius, 0, TAU);
       ctx.fillStyle = def.accent;
       ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  private drawArcs(ctx: CanvasRenderingContext2D, sim: NaiveSim): void {
+    for (let i = 0; i < sim.arcs.length; i += 1) {
+      const arc = sim.arcs[i];
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, arc.life * 7);
+      ctx.strokeStyle = arc.color;
+      ctx.lineWidth = 2.5;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = arc.color;
+      ctx.beginPath();
+      ctx.moveTo(arc.x1, arc.y1);
+      // A single mid-point kink is enough to read as lightning.
+      ctx.lineTo(
+        (arc.x1 + arc.x2) / 2 + (arc.y2 - arc.y1) * 0.12,
+        (arc.y1 + arc.y2) / 2 - (arc.x2 - arc.x1) * 0.12
+      );
+      ctx.lineTo(arc.x2, arc.y2);
+      ctx.stroke();
       ctx.restore();
     }
   }

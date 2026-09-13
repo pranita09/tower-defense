@@ -65,6 +65,24 @@ export const PATH_LENGTH = SEGMENT_OFFSETS[SEGMENT_OFFSETS.length - 1];
 export const BASE_POSITION: Waypoint = PATH[PATH.length - 1];
 
 /**
+ * Flying enemies ignore the road and take the straight line from the spawn
+ * point to the base, so their position is also a function of one distance
+ * scalar — just along a different route.
+ */
+export const AIR_START: Waypoint = PATH[0];
+export const AIR_LENGTH = Math.hypot(BASE_POSITION.x - AIR_START.x, BASE_POSITION.y - AIR_START.y);
+export const AIR_DIR_X = (BASE_POSITION.x - AIR_START.x) / AIR_LENGTH;
+export const AIR_DIR_Y = (BASE_POSITION.y - AIR_START.y) / AIR_LENGTH;
+
+export function airPathX(distance: number): number {
+  return AIR_START.x + AIR_DIR_X * distance;
+}
+
+export function airPathY(distance: number): number {
+  return AIR_START.y + AIR_DIR_Y * distance;
+}
+
+/**
  * Tiles covered by the path, which cannot be built on.
  *
  * Built by walking the polyline and marking every tile the centre line passes

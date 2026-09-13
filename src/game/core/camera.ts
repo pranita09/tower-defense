@@ -1,11 +1,16 @@
+import { clamp } from './math';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../data/map';
 
 /**
  * Maps world coordinates to the canvas.
  *
- * The whole battlefield is fitted into the visible area and centred, so the
- * simulation never has to care about window size. Insets keep the play field
- * clear of the floating HUD.
+ * At the default zoom the whole battlefield is fitted into the visible area and
+ * centred, so the simulation never has to care about window size. Insets keep
+ * the play field clear of the floating HUD.
+ *
+ * Zooming exists for more than sightseeing: it is what makes off-screen culling
+ * observable. Zoomed in, most of the field is outside the view, and the sprite
+ * counter in the performance overlay shows the renderer skipping it.
  */
 
 export interface CameraInset {
@@ -17,18 +22,71 @@ export interface CameraInset {
 
 export const DEFAULT_INSET: CameraInset = { top: 62, right: 14, bottom: 96, left: 14 };
 
+export const MIN_ZOOM = 1;
+export const MAX_ZOOM = 6;
+
 export class Camera {
+  /** Final world-to-screen scale, including zoom. */
   scale = 1;
   offsetX = 0;
   offsetY = 0;
+  zoom = 1;
+  /** World point held at the centre of the view. */
+  centreX = WORLD_WIDTH / 2;
+  centreY = WORLD_HEIGHT / 2;
+
+  private viewWidth = 0;
+  private viewHeight = 0;
+  private inset: CameraInset = DEFAULT_INSET;
+  private fitScale = 1;
+
+  /** Visible world rectangle, used for culling. */
+  minX = 0;
+  minY = 0;
+  maxX = WORLD_WIDTH;
+  maxY = WORLD_HEIGHT;
 
   fit(viewWidth: number, viewHeight: number, inset: CameraInset = DEFAULT_INSET): void {
-    const availableWidth = Math.max(120, viewWidth - inset.left - inset.right);
-    const availableHeight = Math.max(120, viewHeight - inset.top - inset.bottom);
+    this.viewWidth = viewWidth;
+    this.viewHeight = viewHeight;
+    this.inset = inset;
+    this.recompute();
+  }
 
-    this.scale = Math.min(availableWidth / WORLD_WIDTH, availableHeight / WORLD_HEIGHT);
-    this.offsetX = inset.left + (availableWidth - WORLD_WIDTH * this.scale) / 2;
-    this.offsetY = inset.top + (availableHeight - WORLD_HEIGHT * this.scale) / 2;
+  setZoom(zoom: number, anchorScreenX?: number, anchorScreenY?: number): void {
+    const next = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+    if (next === this.zoom) return;
+
+    if (anchorScreenX === undefined || anchorScreenY === undefined) {
+      this.zoom = next;
+      this.recompute();
+      return;
+    }
+
+    // Keep the world point under the cursor pinned while zooming.
+    const worldX = this.toWorldX(anchorScreenX);
+    const worldY = this.toWorldY(anchorScreenY);
+    this.zoom = next;
+    this.recompute();
+    const afterX = this.toWorldX(anchorScreenX);
+    const afterY = this.toWorldY(anchorScreenY);
+    this.centreX += worldX - afterX;
+    this.centreY += worldY - afterY;
+    this.recompute();
+  }
+
+  panByScreen(dx: number, dy: number): void {
+    if (this.scale === 0) return;
+    this.centreX -= dx / this.scale;
+    this.centreY -= dy / this.scale;
+    this.recompute();
+  }
+
+  reset(): void {
+    this.zoom = 1;
+    this.centreX = WORLD_WIDTH / 2;
+    this.centreY = WORLD_HEIGHT / 2;
+    this.recompute();
   }
 
   toWorldX(screenX: number): number {
@@ -37,5 +95,32 @@ export class Camera {
 
   toWorldY(screenY: number): number {
     return (screenY - this.offsetY) / this.scale;
+  }
+
+  private recompute(): void {
+    const availableWidth = Math.max(120, this.viewWidth - this.inset.left - this.inset.right);
+    const availableHeight = Math.max(120, this.viewHeight - this.inset.top - this.inset.bottom);
+
+    this.fitScale = Math.min(availableWidth / WORLD_WIDTH, availableHeight / WORLD_HEIGHT);
+    this.scale = this.fitScale * this.zoom;
+
+    const visibleWidth = availableWidth / this.scale;
+    const visibleHeight = availableHeight / this.scale;
+
+    // Clamp the centre so the world never drifts away from the view.
+    const halfWidth = Math.min(visibleWidth, WORLD_WIDTH) / 2;
+    const halfHeight = Math.min(visibleHeight, WORLD_HEIGHT) / 2;
+    this.centreX = clamp(this.centreX, halfWidth, WORLD_WIDTH - halfWidth);
+    this.centreY = clamp(this.centreY, halfHeight, WORLD_HEIGHT - halfHeight);
+
+    const viewCentreX = this.inset.left + availableWidth / 2;
+    const viewCentreY = this.inset.top + availableHeight / 2;
+    this.offsetX = viewCentreX - this.centreX * this.scale;
+    this.offsetY = viewCentreY - this.centreY * this.scale;
+
+    this.minX = this.toWorldX(0);
+    this.minY = this.toWorldY(0);
+    this.maxX = this.toWorldX(this.viewWidth);
+    this.maxY = this.toWorldY(this.viewHeight);
   }
 }

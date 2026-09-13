@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { ENEMY_ARMORED, ENEMY_RUNNER } from './enemies';
+import { BOSS_HEALTH_MULTIPLIER, ENEMY_ARMORED, ENEMY_DEFS, ENEMY_RUNNER } from './enemies';
 import { getWave, TOTAL_WAVES, WAVES } from './waves';
+
+/** Total enemy health a wave puts on the field. */
+function waveHealth(wave: (typeof WAVES)[number]): number {
+  return wave.groups.reduce((total, group) => {
+    const base = ENEMY_DEFS[group.enemyId].health * (group.boss ? BOSS_HEALTH_MULTIPLIER : 1);
+    return total + group.count * base * wave.healthScale;
+  }, 0);
+}
 
 describe('wave curve', () => {
   it('defines the full run', () => {
@@ -29,7 +37,12 @@ describe('wave curve', () => {
   it('ramps difficulty by orders of magnitude, not percent', () => {
     const first = WAVES[0];
     const last = WAVES[TOTAL_WAVES - 1];
-    expect(last.healthScale / first.healthScale).toBeGreaterThan(100);
+
+    // What the player actually faces is total health on the field, which is head
+    // count multiplied by the health scale. Judging the curve on the multiplier
+    // alone understates it badly, because the population grows too.
+    expect(waveHealth(last) / waveHealth(first)).toBeGreaterThan(500);
+    expect(last.healthScale / first.healthScale).toBeGreaterThan(40);
     expect(last.totalEnemies).toBeGreaterThan(first.totalEnemies * 8);
     // Speed must stay readable, or late waves become unplayable rather than hard.
     expect(last.speedScale).toBeLessThan(1.5);

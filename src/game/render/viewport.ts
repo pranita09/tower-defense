@@ -29,6 +29,7 @@ export class CanvasViewport implements ViewportSize {
   dpr = 1;
 
   private readonly canvas: HTMLCanvasElement;
+  private readonly mirrors: readonly HTMLCanvasElement[];
   private readonly maxDpr: number;
   private observer: ResizeObserver | null = null;
   private dprQuery: MediaQueryList | null = null;
@@ -36,8 +37,17 @@ export class CanvasViewport implements ViewportSize {
   private pendingCssHeight = 0;
   private dirty = true;
 
-  constructor(canvas: HTMLCanvasElement, options: { maxDpr?: number } = {}) {
+  /**
+   * `mirrors` are extra canvases stacked over the primary one — the optimized
+   * renderer keeps a transparent 2D layer above the WebGL surface for text — and
+   * they are resized in lockstep so the two coordinate spaces never disagree.
+   */
+  constructor(
+    canvas: HTMLCanvasElement,
+    options: { maxDpr?: number; mirrors?: readonly HTMLCanvasElement[] } = {}
+  ) {
     this.canvas = canvas;
+    this.mirrors = options.mirrors ?? [];
     this.maxDpr = options.maxDpr ?? 2;
     this.pendingCssWidth = canvas.clientWidth;
     this.pendingCssHeight = canvas.clientHeight;
@@ -90,6 +100,10 @@ export class CanvasViewport implements ViewportSize {
     this.pixelHeight = pixelHeight;
     this.canvas.width = pixelWidth;
     this.canvas.height = pixelHeight;
+    for (const mirror of this.mirrors) {
+      mirror.width = pixelWidth;
+      mirror.height = pixelHeight;
+    }
     return true;
   }
 

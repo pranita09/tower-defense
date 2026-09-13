@@ -1,6 +1,6 @@
 import { Camera } from '../core/camera';
-import { TILE_SIZE } from '../data/map';
-import { towerDps, towerUpgradeCost, SELL_REFUND_RATE } from '../data/towers';
+import { GRID_COLS, TILE_SIZE } from '../data/map';
+import { SELL_REFUND_RATE, TOWER_DEFS, towerDps, towerUpgradeCost } from '../data/towers';
 import { TOTAL_WAVES } from '../data/waves';
 import type {
   EngineMode,
@@ -11,29 +11,32 @@ import type {
   StressRequest,
 } from '../engine';
 import type { CanvasViewport } from '../render/viewport';
-import { NaiveRenderer, type HoverState } from './naiveRenderer';
-import { NaiveSim } from './naiveSim';
+import { FastRenderer, type HoverState } from './fastRenderer';
+import { FastSim } from './fastSim';
 
 /**
- * Wires the naive simulation and renderer into the engine interface the React
- * shell talks to, so the optimized implementation can be swapped in later
- * without the UI noticing.
+ * Wires the optimized simulation and renderer into the shared engine interface,
+ * so the shell can swap between this and the naive baseline at runtime.
  */
-export class NaiveEngine implements GameEngine {
-  readonly mode: EngineMode = 'naive';
-  readonly rendererLabel = 'Canvas 2D, immediate mode';
+export class FastEngine implements GameEngine {
+  readonly mode: EngineMode = 'fast';
+  readonly rendererLabel = 'WebGL2 instanced';
 
-  private readonly sim = new NaiveSim();
-  private readonly renderer = new NaiveRenderer();
+  private readonly sim = new FastSim();
+  private readonly renderer: FastRenderer;
   private readonly camera = new Camera();
-  private readonly ctx: CanvasRenderingContext2D;
   private viewport: CanvasViewport;
   private hover: HoverState | null = null;
 
-  constructor(ctx: CanvasRenderingContext2D, viewport: CanvasViewport) {
-    this.ctx = ctx;
+  constructor(
+    gl: WebGL2RenderingContext,
+    overlay: CanvasRenderingContext2D,
+    viewport: CanvasViewport
+  ) {
+    this.renderer = new FastRenderer(gl, overlay);
     this.viewport = viewport;
     this.camera.fit(viewport.cssWidth, viewport.cssHeight);
+    this.renderer.resize(viewport);
   }
 
   step(delta: number): void {
@@ -41,12 +44,20 @@ export class NaiveEngine implements GameEngine {
   }
 
   render(alpha: number): void {
-    this.renderer.draw(this.sim, this.ctx, this.viewport, this.camera, alpha, this.hover);
+    this.renderer.draw(
+      this.sim,
+      this.viewport,
+      this.camera,
+      alpha,
+      this.hover,
+      this.sim.towerIndexById(this.sim.selectedTowerId)
+    );
   }
 
   resize(viewport: CanvasViewport): void {
     this.viewport = viewport;
     this.camera.fit(viewport.cssWidth, viewport.cssHeight);
+    this.renderer.resize(viewport);
   }
 
   getState(): GameStateSnapshot {
@@ -62,59 +73,39 @@ export class NaiveEngine implements GameEngine {
       waveSpawned: sim.waveSpawned,
       waveTotal: sim.waveTotal,
       restSeconds: sim.phase === 'ready' ? Math.max(0, sim.restTimer) : 0,
-      enemyCount: sim.enemies.length,
-      towerCount: sim.towers.length,
-      projectileCount: sim.projectiles.length,
+      enemyCount: sim.enemyCount,
+      towerCount: sim.towerCount,
+      projectileCount: sim.projectileCount,
       leaks: sim.leaks,
       selected: this.describeSelection(),
     };
   }
 
   getRenderStats(): RenderStats {
-    // The naive renderer issues Canvas 2D commands per entity, so there is no
-    // sprite buffer to report. The draw-call estimate is deliberately rough; the
-    // point is that it grows with the entity count instead of staying at two.
-    const sim = this.sim;
-    return {
-      sprites: sim.enemies.length + sim.projectiles.length + sim.towers.length,
-      culled: 0,
-      drawCalls: sim.enemies.length * 3 + sim.projectiles.length * 2 + sim.towers.length * 3 + 260,
-    };
-  }
-
-  zoomAt(factor: number, screenX: number, screenY: number): void {
-    this.camera.setZoom(this.camera.zoom * factor, screenX, screenY);
-  }
-
-  panBy(dx: number, dy: number): void {
-    this.camera.panByScreen(dx, dy);
-  }
-
-  resetView(): void {
-    this.camera.reset();
-  }
-
-  getZoom(): number {
-    return this.camera.zoom;
+    return this.renderer.stats;
   }
 
   private describeSelection(): SelectedTowerInfo | null {
-    const tower = this.sim.selectedTower();
-    if (!tower) return null;
-    const stats = this.sim.towerLevelStats(tower);
+    const index = this.sim.towerIndexById(this.sim.selectedTowerId);
+    if (index < 0) return null;
+
+    const typeId = this.sim.tType[index];
+    const level = this.sim.tLevel[index];
+    const stats = TOWER_DEFS[typeId].levels[level - 1];
+
     return {
-      id: tower.id,
-      typeId: tower.typeId,
-      level: tower.level,
+      id: this.sim.tId[index],
+      typeId,
+      level,
       damage: stats.damage,
       range: stats.range,
       cooldown: stats.cooldown,
-      dps: towerDps(tower.typeId, tower.level),
+      dps: towerDps(typeId, level),
       splashRadius: stats.splashRadius,
       slowFactor: stats.slowFactor,
-      upgradeCost: towerUpgradeCost(tower.typeId, tower.level),
-      sellValue: Math.floor(tower.invested * SELL_REFUND_RATE),
-      kills: tower.kills,
+      upgradeCost: towerUpgradeCost(typeId, level),
+      sellValue: Math.floor(this.sim.tInvested[index] * SELL_REFUND_RATE),
+      kills: this.sim.tKills[index],
     };
   }
 
@@ -134,11 +125,9 @@ export class NaiveEngine implements GameEngine {
   }
 
   selectAt(screenX: number, screenY: number): number | null {
-    const tower = this.sim.towerAtPoint(
-      this.camera.toWorldX(screenX),
-      this.camera.toWorldY(screenY)
-    );
-    this.sim.selectedTowerId = tower ? tower.id : null;
+    const { col, row } = this.tileAt(screenX, screenY);
+    const index = this.sim.towerIndexAtTile(col, row);
+    this.sim.selectedTowerId = index >= 0 ? this.sim.tId[index] : null;
     return this.sim.selectedTowerId;
   }
 
@@ -160,7 +149,27 @@ export class NaiveEngine implements GameEngine {
       return;
     }
     const { col, row } = this.tileAt(screenX, screenY);
+    if (col < 0 || row < 0 || col >= GRID_COLS) {
+      this.hover = null;
+      return;
+    }
     this.hover = { col, row, typeId, valid: this.sim.canPlace(col, row) };
+  }
+
+  zoomAt(factor: number, screenX: number, screenY: number): void {
+    this.camera.setZoom(this.camera.zoom * factor, screenX, screenY);
+  }
+
+  panBy(dx: number, dy: number): void {
+    this.camera.panByScreen(dx, dy);
+  }
+
+  resetView(): void {
+    this.camera.reset();
+  }
+
+  getZoom(): number {
+    return this.camera.zoom;
   }
 
   startWave(): boolean {
@@ -179,5 +188,6 @@ export class NaiveEngine implements GameEngine {
 
   dispose(): void {
     this.sim.reset();
+    this.renderer.dispose();
   }
 }

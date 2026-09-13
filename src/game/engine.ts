@@ -63,7 +63,22 @@ export interface StressRequest {
   projectiles: number;
 }
 
+/** What the renderer actually submitted last frame. */
+export interface RenderStats {
+  /** Sprites uploaded and drawn. */
+  sprites: number;
+  /** Sprites rejected for being outside the visible area. */
+  culled: number;
+  drawCalls: number;
+}
+
+export type EngineMode = 'fast' | 'naive';
+
 export interface GameEngine {
+  /** Which implementation this is, for the UI badge. */
+  readonly mode: EngineMode;
+  readonly rendererLabel: string;
+
   /** Advance the simulation by a fixed delta. */
   step(delta: number): void;
   /** Draw the world. `alpha` interpolates between the last two ticks. */
@@ -72,6 +87,7 @@ export interface GameEngine {
   resize(viewport: CanvasViewport): void;
 
   getState(): GameStateSnapshot;
+  getRenderStats(): RenderStats;
 
   /** Screen (CSS pixel) position to tile coordinates. */
   tileAt(screenX: number, screenY: number): { col: number; row: number };
@@ -85,6 +101,13 @@ export interface GameEngine {
 
   /** Ghost preview follows the cursor; pass null to hide it. */
   setHover(screenX: number | null, screenY: number | null, typeId: number | null): void;
+
+  /** Zooms about a screen point. `factor` multiplies the current zoom. */
+  zoomAt(factor: number, screenX: number, screenY: number): void;
+  panBy(dx: number, dy: number): void;
+  resetView(): void;
+  /** Current zoom level, for the UI. */
+  getZoom(): number;
 
   startWave(): boolean;
   restart(): void;

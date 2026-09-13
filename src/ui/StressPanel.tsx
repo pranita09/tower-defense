@@ -18,7 +18,8 @@ interface StressPreset {
 const PRESETS: readonly StressPreset[] = [
   { label: 'Warm-up', request: { enemies: 1000, towers: 40, projectiles: 250 } },
   { label: 'Target load', request: { enemies: 5000, towers: 100, projectiles: 1000 } },
-  { label: 'Overkill', request: { enemies: 10000, towers: 100, projectiles: 2000 } },
+  { label: 'Overkill', request: { enemies: 10000, towers: 150, projectiles: 2000 } },
+  { label: 'Breaking point', request: { enemies: 16000, towers: 250, projectiles: 4000 } },
 ];
 
 interface StressPanelProps {

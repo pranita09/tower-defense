@@ -5,9 +5,10 @@ import {
   type PerfMonitor,
   type PerfSnapshot,
 } from '../game/core/perf';
+import type { RenderStats } from '../game/engine';
 import './PerfOverlay.css';
 
-const GRAPH_WIDTH = 220;
+const GRAPH_WIDTH = 260;
 const GRAPH_HEIGHT = 46;
 /** Top of the graph, in ms. Frames slower than this are clipped flat. */
 const GRAPH_CEILING_MS = 50;
@@ -15,10 +16,11 @@ const GRAPH_CEILING_MS = 50;
 interface PerfOverlayProps {
   snapshot: PerfSnapshot | null;
   monitor: PerfMonitor | null;
+  render: RenderStats | null;
   onReset: () => void;
 }
 
-export function PerfOverlay({ snapshot, monitor, onReset }: PerfOverlayProps) {
+export function PerfOverlay({ snapshot, monitor, render, onReset }: PerfOverlayProps) {
   const graphRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -83,6 +85,21 @@ export function PerfOverlay({ snapshot, monitor, onReset }: PerfOverlayProps) {
         <Stat label="render" value={`${formatNumber(snapshot?.renderMs, 2)} ms`} />
         <Stat label="cpu" value={`${formatNumber(snapshot?.cpuMs, 2)} ms`} />
         <Stat label="ticks/frame" value={formatNumber(snapshot?.ticksPerFrame, 2)} />
+        <Stat
+          label="draw calls"
+          value={formatNumber(render?.drawCalls, 0)}
+          hint="Two for the optimized renderer, regardless of entity count"
+        />
+        <Stat
+          label="sprites"
+          value={formatNumber(render?.sprites, 0)}
+          hint="Instances uploaded in the single batched draw call"
+        />
+        <Stat
+          label="culled"
+          value={formatNumber(render?.culled, 0)}
+          hint="Sprites skipped for being outside the visible area — zoom in to see this rise"
+        />
       </dl>
 
       <footer className="perf__window">

@@ -60,6 +60,14 @@
   color: var(--c-text-dim);
 }
 
+.hud__sub {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-dim);
+}
+
 .hud__stat--gold .hud__value {
   color: var(--c-gold);
 }

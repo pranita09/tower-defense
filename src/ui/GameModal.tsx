@@ -3,11 +3,13 @@ import './panels.css';
 
 interface GameModalProps {
   state: GameStateSnapshot;
+  highScore: number;
   onRestart: () => void;
 }
 
-export function GameModal({ state, onRestart }: GameModalProps) {
+export function GameModal({ state, highScore, onRestart }: GameModalProps) {
   const victory = state.phase === 'victory';
+  const isBest = state.score > 0 && state.score >= highScore;
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true">
@@ -37,6 +39,10 @@ export function GameModal({ state, onRestart }: GameModalProps) {
             <span className="modal__stat-label">Base left</span>
           </div>
         </div>
+
+        <p className="modal__best">
+          {isBest ? 'New best score' : `Best ${highScore.toLocaleString()}`}
+        </p>
 
         <button className="action action--primary" type="button" onClick={onRestart} autoFocus>
           Play again

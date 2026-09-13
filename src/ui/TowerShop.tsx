@@ -32,7 +32,7 @@ export function TowerShop({ gold, selectedType, onSelect }: TowerShopProps) {
               <span className="shop__hotkey">{def.hotkey}</span>
             </span>
             <span className="shop__meta">
-              {def.role}
+              <span className="shop__role">{def.role}</span>
               <span className="shop__cost">{cost}</span>
             </span>
           </button>

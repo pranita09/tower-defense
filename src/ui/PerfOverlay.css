@@ -1,5 +1,5 @@
 .perf {
-  width: 15.5rem;
+  width: 17.5rem;
   padding: 0.65rem 0.75rem 0.55rem;
   border: 1px solid var(--c-border);
   border-radius: calc(var(--radius) + 2px);
@@ -77,8 +77,9 @@
 .perf__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1px 0.6rem;
+  gap: 1px 0.7rem;
   margin: 0;
+  font-size: 0.66rem;
 }
 
 .perf__stat {
@@ -86,6 +87,9 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.3rem;
+  /* Labels and numbers each stay on one line; the panel is sized to fit the
+     widest of them rather than reflowing as the numbers change. */
+  white-space: nowrap;
 }
 
 .perf__stat dt {
