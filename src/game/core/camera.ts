@@ -1,11 +1,9 @@
 import { clamp } from './math';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../data/map';
 
-/**
- * Maps world coordinates to the canvas. At zoom 1 the whole field is fitted and
- * centred, with insets keeping it clear of the floating HUD. Zooming in is also
- * how off-screen culling becomes observable in the overlay.
- */
+// Maps world coordinates to the canvas. At zoom 1 the whole field is fitted and
+// centred, with insets keeping it clear of the floating HUD. Zooming in is also
+// how off-screen culling becomes observable in the overlay.
 
 export interface CameraInset {
   top: number;
@@ -20,12 +18,12 @@ export const MIN_ZOOM = 1;
 export const MAX_ZOOM = 6;
 
 export class Camera {
-  /** Final world-to-screen scale, including zoom. */
+  // Final world-to-screen scale, including zoom.
   scale = 1;
   offsetX = 0;
   offsetY = 0;
   zoom = 1;
-  /** World point held at the centre of the view. */
+  // World point held at the centre of the view.
   centreX = WORLD_WIDTH / 2;
   centreY = WORLD_HEIGHT / 2;
 
@@ -34,7 +32,7 @@ export class Camera {
   private inset: CameraInset = DEFAULT_INSET;
   private fitScale = 1;
 
-  /** Visible world rectangle, used for culling. */
+  // Visible world rectangle, used for culling.
   minX = 0;
   minY = 0;
   maxX = WORLD_WIDTH;
@@ -57,7 +55,7 @@ export class Camera {
       return;
     }
 
-    // Keep the world point under the cursor pinned while zooming.
+    // Keep the world point pinned while zooming.
     const worldX = this.toWorldX(anchorScreenX);
     const worldY = this.toWorldY(anchorScreenY);
     this.zoom = next;
@@ -101,7 +99,7 @@ export class Camera {
     const visibleWidth = availableWidth / this.scale;
     const visibleHeight = availableHeight / this.scale;
 
-    // Clamp the centre so the world never drifts away from the view.
+    // Clamp the centre so the world never drifts.
     const halfWidth = Math.min(visibleWidth, WORLD_WIDTH) / 2;
     const halfHeight = Math.min(visibleHeight, WORLD_HEIGHT) / 2;
     this.centreX = clamp(this.centreX, halfWidth, WORLD_WIDTH - halfWidth);

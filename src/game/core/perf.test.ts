@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PerfMonitor } from './perf';
 
-/** Feeds a list of frame intervals (ms) through the monitor. */
+// Feeds a list of frame intervals (ms) through the monitor.
 function feed(monitor: PerfMonitor, intervals: number[]): void {
   let timestamp = 0;
   monitor.beginFrame(timestamp);

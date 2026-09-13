@@ -1,7 +1,5 @@
-/**
- * Mulberry32. The simulation never calls `Math.random`, so a stress run can be
- * repeated exactly — the difference between a benchmark and an anecdote.
- */
+// Mulberry32. The simulation never calls `Math.random`, so a stress run can be
+// repeated exactly — the difference between a benchmark and an anecdote.
 export class Rng {
   private state: number;
 
@@ -9,7 +7,7 @@ export class Rng {
     this.state = seed >>> 0;
   }
 
-  /** Uniform in [0, 1). */
+  // Uniform in [0, 1).
   next(): number {
     this.state = (this.state + 0x6d2b79f5) >>> 0;
     let t = this.state;
@@ -18,12 +16,12 @@ export class Rng {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
-  /** Uniform in [min, max). */
+  // Uniform in [min, max).
   range(min: number, max: number): number {
     return min + this.next() * (max - min);
   }
 
-  /** Uniform integer in [0, max). */
+  // Uniform integer in [0, max).
   int(max: number): number {
     return Math.floor(this.next() * max);
   }

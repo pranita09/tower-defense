@@ -1,12 +1,6 @@
 import type { EngineMode } from '../game/engine';
 import './panels.css';
 
-/**
- * Switches implementations at runtime: same game, same content, same stress
- * presets, so the overlay is a fair comparison. Switching restarts the run, since
- * the two simulations share no memory layout.
- */
-
 interface EngineToggleProps {
   mode: EngineMode;
   rendererLabel: string;

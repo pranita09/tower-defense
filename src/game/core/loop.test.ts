@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GameLoop, type GameLoopOptions } from './loop';
 
-/** An injected clock and scheduler, so "a second at 144Hz" is a list of timestamps. */
+// An injected clock and scheduler, so "a second at 144Hz" is a list of timestamps.
 function harness(options: Partial<GameLoopOptions> = {}) {
   const stepDeltas: number[] = [];
   const alphas: number[] = [];
@@ -27,7 +27,7 @@ function harness(options: Partial<GameLoopOptions> = {}) {
     loop,
     stepDeltas,
     alphas,
-    /** Feeds `frames` animation frames spaced `intervalMs` apart. */
+    // Feeds `frames` animation frames spaced `intervalMs` apart.
     advance(frames: number, intervalMs: number) {
       for (let i = 0; i < frames; i += 1) {
         clock += intervalMs;

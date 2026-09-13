@@ -3,10 +3,7 @@ import { TOWER_DEFS } from '../game/data/towers';
 import { STARTING_GOLD, STARTING_HEALTH, TOTAL_WAVES } from '../game/data/waves';
 import './StartScreen.css';
 
-/**
- * Title screen. Puts the rules in one place, and gives browsers the click they
- * require before audio can start.
- */
+// Title screen. Puts the rules in one place, and gives browsers the click they require before audio can start.
 
 interface StartScreenProps {
   highScore: number;

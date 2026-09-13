@@ -1,12 +1,10 @@
-/**
- * Fixed-capacity slot allocator. A slot index is the entity's index in every
- * parallel data array. Capacity is reserved once, removal is an O(1) swap rather
- * than a `splice`, and each release bumps a generation counter so a projectile
- * holding a stale slot is detected instead of hitting whatever moved in.
- */
+// Fixed-capacity slot allocator. A slot index is the entity's index in every
+// parallel data array. Capacity is reserved once, removal is an O(1) swap rather
+// than a `splice`, and each release bumps a generation counter so a projectile
+// holding a stale slot is detected instead of hitting whatever moved in.
 export class SlotPool {
   readonly capacity: number;
-  /** Dense list of live slots. Only the first `activeCount` entries are valid. */
+  // Dense list of live slots. Only the first `activeCount` entries are valid.
   readonly active: Int32Array;
   readonly generation: Uint16Array;
 
@@ -32,7 +30,7 @@ export class SlotPool {
     return this.freeCount;
   }
 
-  /** Returns a slot index, or -1 when the pool is full. */
+  // Returns a slot index, or -1 when the pool is full.
   alloc(): number {
     if (this.freeCount === 0) return -1;
     this.freeCount -= 1;
@@ -65,7 +63,7 @@ export class SlotPool {
     return slot >= 0 && slot < this.capacity && this.live[slot] === 1;
   }
 
-  /** True when the slot still holds the entity the caller remembered. */
+  // True when the slot still holds the entity the caller remembered.
   matches(slot: number, generation: number): boolean {
     return this.isLive(slot) && this.generation[slot] === generation;
   }

@@ -26,15 +26,6 @@ import { TowerPanel } from './TowerPanel';
 import { TowerShop } from './TowerShop';
 import './GameView.css';
 
-/**
- * React owns the HUD and nothing else. It reads game state on a timer rather than
- * per frame, and the engine never calls into React, so entity counts cannot cause
- * a re-render.
- *
- * Two canvases are stacked: WebGL underneath, a transparent 2D layer above it for
- * text. The naive engine draws its whole world onto the 2D layer instead, so
- * swapping implementations needs no DOM changes.
- */
 const HUD_REFRESH_MS = 120;
 const BANNER_MS = 1700;
 const ZOOM_WHEEL_SENSITIVITY = 0.0016;
@@ -56,11 +47,11 @@ export function GameView() {
   const contextsRef = useRef<Contexts | null>(null);
   const audioRef = useRef<AudioKit>(new AudioKit(loadMuted()));
   const autoPausedRef = useRef(false);
-  /** Read by pointer handlers, which must not be re-created as it changes. */
+  // Read by pointer handlers, which must not be re-created as it changes.
   const buildTypeRef = useRef<number | null>(null);
   const panPointerRef = useRef<number | null>(null);
   const panOriginRef = useRef({ x: 0, y: 0 });
-  /** Previous values, so the HUD tick can notice events worth a sound. */
+  // Previous values, so the HUD tick can notice events worth a sound.
   const previousRef = useRef({ wave: 0, leaks: 0, phase: 'ready' as GameStateSnapshot['phase'] });
   const bannerTimerRef = useRef(0);
 
@@ -82,7 +73,7 @@ export function GameView() {
   const [zoom, setZoom] = useState(1);
   const [banner, setBanner] = useState<string | null>(null);
 
-  /** Pulls fresh game state immediately, for actions that must feel instant. */
+  // Pulls fresh game state immediately, for actions that must feel instant.
   const refresh = useCallback(() => {
     const engine = engineRef.current;
     if (engine) setState(engine.getState());
@@ -180,7 +171,7 @@ export function GameView() {
     };
   }, [showBanner]);
 
-  // ── The engine itself, rebuilt when the implementation changes ─────────────
+  // The engine itself, rebuilt when the implementation changes
 
   useEffect(() => {
     const contexts = contextsRef.current;
@@ -209,7 +200,7 @@ export function GameView() {
     };
   }, [mode]);
 
-  // ── Controls ───────────────────────────────────────────────────────────────
+  // Controls
 
   const togglePause = useCallback(() => {
     const loop = loopRef.current;
@@ -300,7 +291,7 @@ export function GameView() {
     refresh();
   }, [monitor, refresh]);
 
-  // ── Pointer input ──────────────────────────────────────────────────────────
+  // Pointer inputs
 
   const onPointerMove = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
     const engine = engineRef.current;
@@ -371,7 +362,7 @@ export function GameView() {
     setZoom(engineRef.current?.getZoom() ?? 1);
   }, []);
 
-  /** Non-passive, to cancel page scroll — which React's `onWheel` cannot promise. */
+  // Non-passive, to cancel page scroll — which React's `onWheel` cannot promise.
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -393,7 +384,7 @@ export function GameView() {
     return () => stage.removeEventListener('wheel', onWheel);
   }, []);
 
-  // ── Keyboard ───────────────────────────────────────────────────────────────
+  // Keyboard controls
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

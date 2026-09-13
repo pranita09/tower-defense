@@ -8,22 +8,20 @@ import {
   type PathPoint,
 } from '../data/map';
 
-/**
- * Positions sampled along the road, so movement is `distance += speed * dt` and
- * a lookup is two array reads and a lerp. The naive version walks the waypoint
- * list with a square root per step instead.
- */
+// Positions sampled along the road, so movement is `distance += speed * dt` and
+// a lookup is two array reads and a lerp. The naive version walks the waypoint
+// list with a square root per step instead.
 
 const SAMPLE_STEP = 4;
 
 export class PathLut {
-  /** Sampled positions, one every `step` world pixels. */
+  // Sampled positions, one every `step` world pixels.
   readonly xs: Float32Array;
   readonly ys: Float32Array;
   readonly step: number;
   readonly invStep: number;
   readonly length: number;
-  /** Highest safe index for `i` when reading `i` and `i + 1`. */
+  // Highest safe index for `i` when reading `i` and `i + 1`.
   readonly maxIndex: number;
 
   constructor(
@@ -48,7 +46,7 @@ export class PathLut {
     }
   }
 
-  /** For callers outside the hot loop; the simulation reads `xs`/`ys` directly. */
+  // For callers outside the hot loop; the simulation reads `xs`/`ys` directly.
   positionAt(distance: number, out: { x: number; y: number }): void {
     let t = distance * this.invStep;
     if (t < 0) t = 0;
@@ -60,10 +58,10 @@ export class PathLut {
   }
 }
 
-/** The road that ground enemies walk. */
+// The road that ground enemies walk.
 export const GROUND_LUT = new PathLut(PATH_LENGTH, SAMPLE_STEP, samplePath);
 
-/** Flyers go straight, so the same distance scalar drives a linear equation. */
+// Flyers go straight, so the same distance scalar drives a linear equation.
 export const AIR_ORIGIN_X = AIR_START.x;
 export const AIR_ORIGIN_Y = AIR_START.y;
 export const AIR_STEP_X = AIR_DIR_X;

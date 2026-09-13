@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SpatialGrid } from './spatialGrid';
 
-/** Collects everything the grid reports inside a circle. */
+// Collects everything the grid reports inside a circle.
 function queryCircle(
   grid: SpatialGrid,
   x: number,
@@ -31,7 +31,7 @@ function queryCircle(
   return found.sort((a, b) => a - b);
 }
 
-/** The scan the naive simulation performs, used as the reference answer. */
+// The scan the naive simulation performs, used as the reference answer.
 function bruteForce(
   count: number,
   x: number,

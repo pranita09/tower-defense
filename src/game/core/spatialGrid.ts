@@ -1,19 +1,18 @@
-/**
- * Uniform grid rebuilt every tick, so targeting visits only the cells a radius
- * overlaps instead of all 5,000 enemies. The build is a counting sort into flat
- * typed arrays, so it allocates nothing.
- *
- * Callers read `offsets` and `items` directly rather than passing a callback,
- * which would cost a closure or a megamorphic call in the hottest loop here.
- */
+// Uniform grid rebuilt every tick, so targeting visits only the cells a radius
+// overlaps instead of all 5,000 enemies. The build is a counting sort into flat
+// typed arrays, so it allocates nothing.
+//
+// Callers read `offsets` and `items` directly rather than passing a callback,
+// which would cost a closure or a megamorphic call in the hottest loop here.
+
 export class SpatialGrid {
   readonly cols: number;
   readonly rows: number;
   readonly cellSize: number;
   readonly invCellSize: number;
-  /** Start index of each cell in `items`; length is cols * rows + 1. */
+  // Start index of each cell in `items`; length is cols * rows + 1.
   readonly offsets: Int32Array;
-  /** Entity slots, grouped by cell. */
+  // Entity slots, grouped by cell.
   readonly items: Int32Array;
 
   private readonly cursor: Int32Array;
@@ -25,7 +24,7 @@ export class SpatialGrid {
     height: number,
     cellSize: number,
     capacity: number,
-    /** World padding, so entities spawning just off-map still land in a cell. */
+    // World padding, so entities spawning just off-map still land in a cell.
     margin = 64
   ) {
     this.cellSize = cellSize;

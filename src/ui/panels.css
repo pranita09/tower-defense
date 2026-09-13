@@ -16,7 +16,7 @@
   color: var(--c-text-dim);
 }
 
-/* ── Tower shop ──────────────────────────────────────────────────────────── */
+/* Tower shop */
 
 .shop {
   display: flex;
@@ -101,7 +101,7 @@
   color: var(--c-gold);
 }
 
-/* ── Selected tower ──────────────────────────────────────────────────────── */
+/* Selected tower */
 
 .tower-panel {
   width: 14.5rem;
@@ -161,7 +161,7 @@
   gap: 0.4rem;
 }
 
-/* ── Buttons shared by panels ────────────────────────────────────────────── */
+/* Buttons shared by panels */
 
 .action {
   flex: 1;
@@ -202,7 +202,7 @@
   color: var(--c-gold);
 }
 
-/* ── Stress panel ────────────────────────────────────────────────────────── */
+/* Stress panel */
 
 .stress {
   width: 17.5rem;
@@ -237,7 +237,7 @@
   color: var(--c-text-dim);
 }
 
-/* ── Engine toggle ───────────────────────────────────────────────────────── */
+/* Engine toggle */
 
 .engine {
   width: 17.5rem;
@@ -276,7 +276,7 @@
   color: var(--c-text-dim);
 }
 
-/* ── End-of-run modal ────────────────────────────────────────────────────── */
+/* End-of-run modal */
 
 .modal-backdrop {
   position: absolute;

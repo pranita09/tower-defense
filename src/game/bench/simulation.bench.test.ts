@@ -14,16 +14,10 @@ import { TOTAL_WAVES } from '../data/waves';
 import { FastSim } from '../fast/fastSim';
 import { NaiveSim } from '../naive/naiveSim';
 
-/**
- * Simulation-only benchmarks, run with `npm run bench` and skipped otherwise
- * because they take seconds. Separating simulation from rendering is what makes it
- * possible to say which of the two a slow frame came from.
- */
-
 const TICK = 1 / 60;
 const WARMUP_TICKS = 60;
 const MEASURED_TICKS = 120;
-/** A 60Hz frame has this much time for everything, drawing included. */
+// A 60Hz frame has this much time for everything, drawing included.
 const FRAME_BUDGET_MS = 16.67;
 
 interface Scenario {
@@ -62,7 +56,7 @@ function measure(create: () => Steppable, scenario: Scenario): number {
   return (performance.now() - start) / MEASURED_TICKS;
 }
 
-/** Via `globalThis`, so the browser tsconfig needs no Node type definitions. */
+// Via `globalThis`, so the browser tsconfig needs no Node type definitions.
 const nodeProcess = (
   globalThis as {
     process?: {
@@ -116,7 +110,7 @@ describe.skipIf(!benchEnabled)('simulation cost: naive vs optimized', () => {
   });
 });
 
-/** Buildable tiles, nearest to the road first — where a player actually builds. */
+// Buildable tiles, nearest to the road first — where a player actually builds.
 function tilesNearPath(sim: FastSim): Array<{ col: number; row: number }> {
   const point = { x: 0, y: 0 };
   const samples: Array<{ x: number; y: number }> = [];
@@ -142,7 +136,7 @@ function tilesNearPath(sim: FastSim): Array<{ col: number; row: number }> {
   return tiles.sort((a, b) => a.distance - b.distance);
 }
 
-/** The mix a reasonable player builds, cycled as gold allows. */
+// The mix a reasonable player builds, cycled as gold allows.
 const BUILD_ORDER = [
   TOWER_GUN,
   TOWER_GUN,

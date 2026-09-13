@@ -1,22 +1,20 @@
 import type { PerfMonitor } from './perf';
 
-/**
- * The one animation loop in the app. `step` always gets the same fixed delta so
- * the game plays identically at any refresh rate; `render` gets the leftover
- * fraction of a tick to interpolate with.
- */
+// The one animation loop in the app. `step` always gets the same fixed delta so
+// the game plays identically at any refresh rate; `render` gets the leftover
+// fraction of a tick to interpolate with.
 
 export interface GameLoopHandlers {
   step: (delta: number, tick: number) => void;
-  /** `alpha` is progress (0..1) from the previous tick to the latest. */
+  // `alpha` is progress (0..1) from the previous tick to the latest.
   render: (alpha: number) => void;
 }
 
 export interface GameLoopOptions {
   tickRate?: number;
-  /** Caps catch-up work, so one slow frame cannot cascade into a spiral. */
+  // Caps catch-up work, so one slow frame cannot cascade into a spiral.
   maxTicksPerFrame?: number;
-  /** Longest real delta we will simulate. Hidden tabs report huge gaps. */
+  // Longest real delta we will simulate. Hidden tabs report huge gaps.
   maxFrameDelta?: number;
   perf?: PerfMonitor;
   now?: () => number;
@@ -27,7 +25,7 @@ export interface GameLoopOptions {
 export const DEFAULT_TICK_RATE = 60;
 
 export class GameLoop {
-  /** Seconds of simulated time per tick. Never varies. */
+  // Seconds of simulated time per tick. Never varies.
   readonly fixedDelta: number;
 
   private readonly handlers: GameLoopHandlers;
@@ -48,7 +46,7 @@ export class GameLoop {
   private lastTime = 0;
   private hasLastTime = false;
 
-  /** Ticks abandoned because the loop could not keep up. */
+  // Ticks abandoned because the loop could not keep up.
   droppedTicks = 0;
 
   constructor(handlers: GameLoopHandlers, options: GameLoopOptions = {}) {
@@ -108,12 +106,12 @@ export class GameLoop {
     return this.paused;
   }
 
-  /** Runs more ticks per second, never larger ones. */
+  // Runs more ticks per second, never larger ones.
   setSpeed(multiplier: number): void {
     this.speed = multiplier > 0 ? multiplier : 1;
   }
 
-  /** For tests, which supply their own clock. */
+  // For tests, which supply their own clock.
   runFrame(time: number): void {
     this.advance(time);
   }

@@ -10,7 +10,7 @@ import './PerfOverlay.css';
 
 const GRAPH_WIDTH = 260;
 const GRAPH_HEIGHT = 46;
-/** Top of the graph, in ms. Frames slower than this are clipped flat. */
+// Top of the graph, in ms. Frames slower than this are clipped flat.
 const GRAPH_CEILING_MS = 50;
 
 interface PerfOverlayProps {
@@ -139,7 +139,7 @@ function formatNumber(value: number | undefined, digits: number): string {
   return value.toFixed(digits);
 }
 
-/** Recent frame intervals, with reference lines at the 45 FPS and 33ms limits. */
+// Recent frame intervals, with reference lines at the 45 FPS and 33ms limits.
 function drawFrameGraph(canvas: HTMLCanvasElement, monitor: PerfMonitor): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;

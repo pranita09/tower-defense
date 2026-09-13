@@ -1,16 +1,14 @@
-/**
- * Frame timing. The headline number is the frame *interval*, since that is what
- * the player perceives and it includes browser work outside our callbacks; the
- * CPU figures are diagnostics that explain why an interval was long.
- *
- * Percentiles use a fixed-size histogram, so a window is O(1) per frame with no
- * allocation and can run for a whole game without growing.
- */
+// Frame timing. The headline number is the frame *interval*, since that is what
+// the player perceives and it includes browser work outside our callbacks; the
+// CPU figures are diagnostics that explain why an interval was long.
+//
+// Percentiles use a fixed-size histogram, so a window is O(1) per frame with no
+// allocation and can run for a whole game without growing.
 
 export const FRAME_BUDGET_45FPS_MS = 1000 / 45;
 export const FRAME_BUDGET_LIMIT_MS = 33;
 
-/** Past this an interval means a hidden tab or a sleeping machine, not a slow frame. */
+// Past this an interval means a hidden tab or a sleeping machine, not a slow frame.
 export const STALL_THRESHOLD_MS = 500;
 
 const BUCKET_MS = 0.5;
@@ -18,7 +16,7 @@ const BUCKET_COUNT = 256; // covers 0..128ms, with a final overflow bucket
 const RECENT_SAMPLES = 180;
 const EMA_WEIGHT = 0.08;
 
-/** All ms values; the CPU figures are exponentially smoothed per frame. */
+// All ms values; the CPU figures are exponentially smoothed per frame.
 export interface PerfSnapshot {
   fps: number;
   fpsInstant: number;
@@ -27,23 +25,23 @@ export interface PerfSnapshot {
   p95Ms: number;
   p99Ms: number;
   worstMs: number;
-  /** Percentage of frames slower than 45 FPS. */
+  // Percentage of frames slower than 45 FPS.
   over45Pct: number;
-  /** Percentage of frames slower than 33ms. */
+  // Percentage of frames slower than 33ms.
   over33Pct: number;
   simMs: number;
   renderMs: number;
-  /** Total time inside the frame callback. Far below the interval means vsync-bound. */
+  // Total time inside the frame callback. Far below the interval means vsync-bound.
   cpuMs: number;
   ticksPerFrame: number;
-  /** Intervals excluded as stalls rather than counted as slow frames. */
+  // Intervals excluded as stalls rather than counted as slow frames.
   stalls: number;
   frames: number;
   windowSeconds: number;
 }
 
 export class PerfMonitor {
-  /** Ring buffer of recent intervals, for the live graph. */
+  // Ring buffer of recent intervals, for the live graph.
   readonly recent = new Float32Array(RECENT_SAMPLES);
   recentCursor = 0;
 
@@ -71,7 +69,7 @@ export class PerfMonitor {
     this.now = options.now ?? (() => performance.now());
   }
 
-  /** `timestamp` is the animation-frame timestamp, not `performance.now()`. */
+  // `timestamp` is the animation-frame timestamp, not `performance.now()`.
   beginFrame(timestamp: number): void {
     if (this.hasLastTimestamp) {
       const interval = timestamp - this.lastTimestamp;
@@ -151,7 +149,7 @@ export class PerfMonitor {
     this.intervalEma += (interval - this.intervalEma) * EMA_WEIGHT;
   }
 
-  /** Upper edge of the bucket containing the requested percentile. */
+  // Upper edge of the bucket containing the requested percentile.
   private percentile(fraction: number): number {
     if (this.frames === 0) return 0;
     const target = Math.ceil(fraction * this.frames);

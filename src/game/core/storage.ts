@@ -1,7 +1,5 @@
-/**
- * `localStorage`, guarded. Private-browsing modes throw on access rather than
- * returning null, and losing a high score is not worth crashing over.
- */
+// `localStorage`, guarded. Private-browsing modes throw on access rather than
+// returning null, and losing a high score is not worth crashing over.
 
 const HIGH_SCORE_KEY = 'td.highScore';
 const MUTED_KEY = 'td.muted';

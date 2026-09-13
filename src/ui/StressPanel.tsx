@@ -1,10 +1,8 @@
 import type { StressRequest } from '../game/engine';
 import './panels.css';
 
-/**
- * Benchmark presets. Counts are held while a preset is active, so a measurement
- * window stays comparable between runs instead of decaying as towers clear.
- */
+// Benchmark presets. Counts are held while a preset is active, so a measurement
+// window stays comparable between runs instead of decaying as towers clear.
 
 interface StressPreset {
   label: string;

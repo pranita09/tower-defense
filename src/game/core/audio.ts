@@ -1,15 +1,13 @@
-/**
- * Sound effects synthesized as short oscillator bursts, so no audio files ship.
- * The context opens on the first gesture because browsers require one, and sounds
- * are rate limited so a hundred simultaneous events cannot spawn a hundred
- * oscillators.
- */
+// Sound effects synthesized as short oscillator bursts, so no audio files ship.
+// The context opens on the first gesture because browsers require one, and sounds
+// are rate limited so a hundred simultaneous events cannot spawn a hundred
+// oscillators.
 
 type Voice = 'square' | 'sine' | 'triangle' | 'sawtooth';
 
 interface ToneOptions {
   frequency: number;
-  /** Sweep target; defaults to no sweep. */
+  // Sweep target; defaults to no sweep.
   endFrequency?: number;
   duration: number;
   voice?: Voice;
@@ -29,7 +27,7 @@ export class AudioKit {
     this.muted = muted;
   }
 
-  /** Safe to call repeatedly; only the first gesture actually opens the device. */
+  // Safe to call repeatedly; only the first gesture actually opens the device.
   unlock(): void {
     if (this.context) {
       if (this.context.state === 'suspended') void this.context.resume();
