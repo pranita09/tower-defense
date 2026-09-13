@@ -1,13 +1,8 @@
 /**
- * Synthesized sound effects.
- *
- * No audio files ship with the game — every sound is a short oscillator burst
- * built on the fly, which keeps the download small and means nothing has to be
- * fetched at runtime.
- *
- * The context is created on the first player gesture, because browsers refuse to
- * start audio before one, and every sound is rate limited so a hundred
- * simultaneous events cannot turn into a hundred oscillators.
+ * Sound effects synthesized as short oscillator bursts, so no audio files ship.
+ * The context opens on the first gesture because browsers require one, and sounds
+ * are rate limited so a hundred simultaneous events cannot spawn a hundred
+ * oscillators.
  */
 
 type Voice = 'square' | 'sine' | 'triangle' | 'sawtooth';

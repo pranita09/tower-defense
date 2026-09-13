@@ -1,9 +1,6 @@
 /**
- * Small numeric helpers used by the simulation.
- *
- * These are deliberately allocation-free and take plain numbers rather than
- * vector objects: everything in the hot loop reads from flat typed arrays, so
- * there is nothing to wrap.
+ * Plain numbers rather than vector objects, because the hot loop reads flat typed
+ * arrays and there is nothing to wrap.
  */
 
 export function clamp(value: number, min: number, max: number): number {

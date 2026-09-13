@@ -2,12 +2,8 @@ import type { StressRequest } from '../game/engine';
 import './panels.css';
 
 /**
- * Benchmark controls.
- *
- * The middle preset is the scenario the project is graded on: 5,000 enemies,
- * 100 towers and 1,000 projectiles alive at the same time. Counts are held for
- * as long as the preset is active, so a measurement window is comparable
- * between runs instead of decaying as towers clear the field.
+ * Benchmark presets. Counts are held while a preset is active, so a measurement
+ * window stays comparable between runs instead of decaying as towers clear.
  */
 
 interface StressPreset {

@@ -2,15 +2,9 @@ import { clamp } from './math';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../data/map';
 
 /**
- * Maps world coordinates to the canvas.
- *
- * At the default zoom the whole battlefield is fitted into the visible area and
- * centred, so the simulation never has to care about window size. Insets keep
- * the play field clear of the floating HUD.
- *
- * Zooming exists for more than sightseeing: it is what makes off-screen culling
- * observable. Zoomed in, most of the field is outside the view, and the sprite
- * counter in the performance overlay shows the renderer skipping it.
+ * Maps world coordinates to the canvas. At zoom 1 the whole field is fitted and
+ * centred, with insets keeping it clear of the floating HUD. Zooming in is also
+ * how off-screen culling becomes observable in the overlay.
  */
 
 export interface CameraInset {

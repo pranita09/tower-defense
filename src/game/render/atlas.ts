@@ -1,13 +1,8 @@
 /**
- * The sprite atlas, generated at startup rather than shipped as an image.
- *
- * Every sprite lives in one texture so the whole frame can be drawn in a single
- * instanced draw call — switching textures would force a separate call per
- * sprite type and undo the batching entirely.
- *
- * Shapes are drawn in white with a mid-grey rim. The shader multiplies by a
- * per-instance colour, so one circle serves every enemy type and the rim comes
- * out as a darker shade of whatever tint is applied.
+ * The sprite atlas, generated at startup rather than shipped as an image. One
+ * texture for everything, because switching textures would force a draw call per
+ * sprite type and undo the batching. Shapes are white with a grey rim so the
+ * shader can tint them, letting one circle serve every enemy type.
  */
 
 export const ATLAS_SIZE = 256;

@@ -1,21 +1,15 @@
 /**
- * Owns the canvas backing-store size.
- *
- * A canvas has two sizes: the CSS box the user sees, and the pixel buffer we
- * draw into. Matching the buffer to `devicePixelRatio` gives crisp edges, but
- * doing it naively on a 4K retina display quadruples the pixel work for no
- * visible gain, so the ratio is capped.
- *
- * Resizes arrive via `ResizeObserver` and are applied from the render loop
- * rather than from the event, because writing `canvas.width` mid-layout is a
- * guaranteed reflow and we would rather pay for it at a predictable moment.
+ * Owns the canvas backing-store size. The device pixel ratio is capped, since
+ * matching a 4K display exactly quadruples the pixel work for no visible gain.
+ * Resizes are applied from the render loop rather than from the observer, because
+ * writing `canvas.width` mid-layout forces a reflow.
  */
 
 export interface ViewportSize {
-  /** CSS pixels — the coordinate space input events and layout use. */
+  /** CSS pixels — the space input events and layout use. */
   cssWidth: number;
   cssHeight: number;
-  /** Backing-store pixels — what the renderer actually fills. */
+  /** Backing-store pixels — what the renderer fills. */
   pixelWidth: number;
   pixelHeight: number;
   dpr: number;
@@ -37,11 +31,7 @@ export class CanvasViewport implements ViewportSize {
   private pendingCssHeight = 0;
   private dirty = true;
 
-  /**
-   * `mirrors` are extra canvases stacked over the primary one — the optimized
-   * renderer keeps a transparent 2D layer above the WebGL surface for text — and
-   * they are resized in lockstep so the two coordinate spaces never disagree.
-   */
+  /** `mirrors` are stacked canvases resized in lockstep, so their spaces agree. */
   constructor(
     canvas: HTMLCanvasElement,
     options: { maxDpr?: number; mirrors?: readonly HTMLCanvasElement[] } = {}
@@ -57,7 +47,7 @@ export class CanvasViewport implements ViewportSize {
     this.observer = new ResizeObserver((entries) => {
       const entry = entries[entries.length - 1];
       if (!entry) return;
-      // `contentBoxSize` is already in CSS pixels and avoids a layout read.
+      // Already in CSS pixels, and avoids a layout read.
       const box = entry.contentBoxSize?.[0];
       if (box) {
         this.pendingCssWidth = box.inlineSize;
@@ -107,10 +97,7 @@ export class CanvasViewport implements ViewportSize {
     return true;
   }
 
-  /**
-   * Dragging the window to a monitor with a different pixel ratio does not fire
-   * a resize, so it is watched with a resolution media query instead.
-   */
+  /** Moving to a monitor with a different ratio fires no resize event. */
   private watchDevicePixelRatio(): void {
     this.dprQuery?.removeEventListener('change', this.onDprChange);
     this.dprQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);

@@ -43,29 +43,15 @@ import { getWave, STARTING_GOLD, STARTING_HEALTH, TOTAL_WAVES } from '../data/wa
 import type { GamePhase, StressRequest } from '../engine';
 
 /**
- * The optimized simulation.
+ * The optimized simulation: same rules and numbers as the naive version, but every
+ * entity field is a slot in a flat typed array allocated once at startup, so
+ * iteration walks contiguous memory and no frame allocates.
  *
- * Same game, same rules, same numbers as the naive version — different
- * mechanics underneath:
- *
- * - **Structure of arrays.** Every entity field is a slot in a flat typed array
- *   allocated once at startup. Iterating 5,000 enemies walks contiguous memory
- *   instead of chasing 5,000 pointers, and nothing is allocated per frame, so
- *   the heap stays flat for a full run and the collector has no reason to pause.
- * - **Slot pools with generation counters.** Deaths are O(1) and never `splice`.
- *   Projectiles refer to a target by slot plus generation, so a recycled slot
- *   cannot be mistaken for the enemy that used to live there.
- * - **Position from one scalar.** Movement is `distance += speed * dt`; the
- *   position comes from a precomputed path table, so there is no per-enemy
- *   direction vector and no square root.
- * - **Spatial grid.** Target acquisition and splash damage query only the cells
- *   they overlap, turning the O(towers x enemies) scan into something close to
- *   O(towers).
- * - **Staggered retargeting.** A tower re-scans every few ticks rather than
- *   every tick, spreading the remaining cost across frames.
- * - **Ring-buffered effects.** Particles, damage numbers and arcs live in
- *   fixed-size buffers where the oldest entry is overwritten, so a hundred
- *   simultaneous deaths cannot grow memory or the frame time.
+ * Deaths are O(1) slot releases; a target is a slot plus generation, so a recycled
+ * slot cannot be mistaken for its previous occupant. Movement is one distance
+ * scalar into the path table. Targeting and splash query the spatial grid instead
+ * of scanning, and retargeting is staggered across ticks. Effects live in ring
+ * buffers, so a hundred simultaneous deaths cannot grow memory or frame time.
  */
 
 export const MAX_ENEMIES = 16_384;
@@ -571,10 +557,7 @@ export class FastSim {
     return dx * dx + dy * dy <= range * range;
   }
 
-  /**
-   * Finds the enemy furthest along its route within range, visiting only the
-   * grid cells the range circle overlaps.
-   */
+  /** Enemy furthest along its route, visiting only the cells range overlaps. */
   private acquireTarget(towerIndex: number, range: number, targetsAir: boolean): number {
     const grid = this.grid;
     const x = this.tX[towerIndex];
@@ -995,8 +978,7 @@ export class FastSim {
       const typeId = this.rng.int(ENEMY_DEFS.length);
       const slot = this.spawnEnemy(typeId, false, this.rng.next() * PATH_LENGTH, 0);
       if (slot < 0) break;
-      // Tough on purpose: the point is to measure a full field, not to watch it
-      // evaporate before the measurement window closes.
+      // Tough on purpose: the point is to measure a full field, not watch it thin.
       this.eMaxHp[slot] *= 40;
       this.eHp[slot] = this.eMaxHp[slot];
     }

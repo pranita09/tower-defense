@@ -1,15 +1,7 @@
 /**
- * Tower tuning table.
- *
- * Five towers, each with three levels. Costs are cumulative investment, and
- * selling refunds a fraction of everything spent on the tile, so upgrading is
- * never a trap.
- *
- * The roster is built around trade-offs rather than a power ranking: the cheap
- * turret is defeated by armor, the mortar cannot hit flyers, the frost tower
- * barely damages anything, the tesla coil ignores armor but has a short reach,
- * and the railgun out-ranges everything while firing far too slowly to handle a
- * crowd.
+ * Tower tuning: five towers, three levels each, built around trade-offs rather
+ * than a power ranking. Selling refunds a fraction of everything spent on the
+ * tile, so upgrading is never a trap.
  */
 
 export const TOWER_GUN = 0;
@@ -20,21 +12,19 @@ export const TOWER_RAILGUN = 4;
 
 export type ProjectileKind = 'bullet' | 'shell' | 'frost' | 'arc' | 'slug';
 
+/** Distances are world pixels, times are seconds. */
 export interface TowerLevel {
   /** Cost to reach this level from the previous one. */
   cost: number;
   damage: number;
-  /** World pixels. */
   range: number;
-  /** Seconds between shots. */
   cooldown: number;
-  /** World pixels per second. Ignored by hitscan towers. */
+  /** Ignored by hitscan towers. */
   projectileSpeed: number;
-  /** Splash radius in world pixels. Zero means single target. */
+  /** Zero means single target. */
   splashRadius: number;
   /** Fraction of speed removed on hit, 0..1. */
   slowFactor: number;
-  /** Seconds the slow lasts. */
   slowDuration: number;
   /** Extra enemies a chain hit jumps to. */
   chainTargets: number;
@@ -45,12 +35,9 @@ export interface TowerDef {
   name: string;
   role: string;
   description: string;
-  /** Keyboard shortcut for the shop. */
   hotkey: string;
   kind: ProjectileKind;
-  /** Can it shoot flying enemies? */
   targetsAir: boolean;
-  /** Damage bypasses enemy armor entirely. */
   ignoresArmor: boolean;
   /** Damage lands instantly instead of spawning a projectile. */
   hitscan: boolean;
@@ -191,7 +178,7 @@ export function towerUpgradeCost(typeId: number, level: number): number | null {
   return levels[level].cost;
 }
 
-/** Nominal damage per second, ignoring armor. Used for the info panel. */
+/** Nominal damage per second, ignoring armor. For the info panel. */
 export function towerDps(typeId: number, level: number): number {
   const def = TOWER_DEFS[typeId];
   const stats = def.levels[level - 1];

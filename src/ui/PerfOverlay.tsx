@@ -139,10 +139,7 @@ function formatNumber(value: number | undefined, digits: number): string {
   return value.toFixed(digits);
 }
 
-/**
- * Draws the recent frame intervals as a bar chart, with reference lines at the
- * 45 FPS and 33ms thresholds so a spike is instantly readable as a violation.
- */
+/** Recent frame intervals, with reference lines at the 45 FPS and 33ms limits. */
 function drawFrameGraph(canvas: HTMLCanvasElement, monitor: PerfMonitor): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;

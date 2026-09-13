@@ -14,10 +14,7 @@ import type { CanvasViewport } from '../render/viewport';
 import { FastRenderer, type HoverState } from './fastRenderer';
 import { FastSim } from './fastSim';
 
-/**
- * Wires the optimized simulation and renderer into the shared engine interface,
- * so the shell can swap between this and the naive baseline at runtime.
- */
+/** Wires the optimized simulation and renderer into the shared engine interface. */
 export class FastEngine implements GameEngine {
   readonly mode: EngineMode = 'fast';
   readonly rendererLabel = 'WebGL2 instanced';

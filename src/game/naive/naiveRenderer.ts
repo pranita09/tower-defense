@@ -14,18 +14,10 @@ import type { CanvasViewport } from '../render/viewport';
 import type { NaiveSim } from './naiveSim';
 
 /**
- * The naive renderer — the project's rendering baseline.
- *
- * Everything here is per-entity immediate-mode Canvas 2D work, which is how a
- * first implementation always looks:
- *
- * - the terrain, grid and path are re-drawn from scratch every single frame;
- * - each entity does its own `save`/`translate`/`beginPath`/`fill`/`restore`,
- *   so the context is reconfigured thousands of times per frame;
- * - projectiles set `shadowBlur` individually, which forces the rasteriser down
- *   a slow path for every one of them;
- * - health bars are drawn for every enemy regardless of size or damage;
- * - nothing is culled, so entities outside the visible area cost full price.
+ * The rendering baseline: per-entity immediate-mode Canvas 2D. Terrain is redrawn
+ * from scratch every frame, each entity does its own `save`/`beginPath`/`restore`,
+ * projectiles set `shadowBlur` individually, health bars are unconditional, and
+ * nothing is culled.
  */
 
 const TAU = Math.PI * 2;
@@ -64,8 +56,7 @@ export class NaiveRenderer {
       dpr * (camera.offsetY + shakeY)
     );
 
-    // Rebuilt from scratch every frame: ~250 tile fills plus four wide stroked
-    // polylines, for a layer that never changes.
+    // ~250 tile fills plus wide stroked polylines, for a layer that never changes.
     paintTerrain(ctx);
     this.drawBase(ctx, sim);
     if (hover) this.drawHover(ctx, hover);
@@ -191,7 +182,7 @@ export class NaiveRenderer {
       ctx.translate(x, y);
 
       if (enemy.flying) {
-        // A shadow below sells the fact that it is above the terrain.
+        // A shadow sells the fact that it is above the terrain.
         ctx.beginPath();
         ctx.ellipse(2, radius + 7, radius * 0.75, radius * 0.32, 0, 0, TAU);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
@@ -231,7 +222,7 @@ export class NaiveRenderer {
       ctx.stroke();
       ctx.restore();
 
-      // A health bar for every enemy, every frame, at any size.
+      // Every enemy, every frame, at any size.
       const barWidth = radius * 2.4;
       const fraction = Math.max(0, enemy.hp / enemy.maxHp);
       ctx.fillStyle = 'rgba(8, 12, 20, 0.85)';

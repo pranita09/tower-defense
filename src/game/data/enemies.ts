@@ -1,13 +1,6 @@
 /**
- * Enemy tuning table.
- *
- * Types are identified by their index so the optimized simulation can store a
- * type as a single byte per enemy.
- *
- * The set is chosen so that no single tower answers everything: armor defeats
- * rapid weak fire, flyers ignore the road and the mortar entirely, runners
- * punish gaps in coverage, and splitters turn a clean kill into two new
- * problems.
+ * Enemy tuning. Types are their index, so the optimized simulation stores one
+ * byte per enemy. The set is picked so no single tower answers everything.
  */
 
 export const ENEMY_GRUNT = 0;
@@ -25,20 +18,16 @@ export interface EnemyDef {
   speed: number;
   /** Flat reduction applied to every hit. */
   armor: number;
-  /** Gold awarded on kill. */
   bounty: number;
-  /** Score awarded on kill. */
   score: number;
   /** Base health lost when this enemy reaches the base. */
   damage: number;
-  /** Drawn radius in world pixels. */
   radius: number;
-  /** Flies straight to the base, ignoring the road. Mortars cannot hit it. */
   flying: boolean;
   /** Type spawned on death, or -1 for none. */
   splitInto: number;
   splitCount: number;
-  /** Health of each spawned child, as a fraction of this enemy's maximum. */
+  /** Child health, as a fraction of this enemy's maximum. */
   splitHealthFactor: number;
   color: string;
   accent: string;
@@ -102,10 +91,8 @@ export const ENEMY_DEFS: readonly EnemyDef[] = [
   },
   {
     id: 'flyer',
-    // Flying cuts the corner: the straight line to the core is far shorter than
-    // the road, so a wisp spends a fraction of the time under fire. Its health
-    // is tuned down to match that advantage, or no amount of anti-air would be
-    // enough in the late waves.
+    // Low health on purpose: the straight line is a third of the road, so a wisp
+    // gets a third of the exposure to fire.
     name: 'Wisp',
     health: 16,
     speed: 108,
@@ -150,7 +137,7 @@ export const BOSS_DAMAGE = 8;
 export const BOSS_RADIUS = 20;
 export const BOSS_SPEED_FACTOR = 0.55;
 
-/** Damage actually taken after armor. A hit always does at least something. */
+/** A hit always does at least something. */
 export function applyArmor(damage: number, armor: number): number {
   const reduced = damage - armor;
   return reduced > 1 ? reduced : 1;

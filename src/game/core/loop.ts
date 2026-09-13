@@ -1,41 +1,22 @@
 import type { PerfMonitor } from './perf';
 
 /**
- * The single animation loop for the entire game.
- *
- * Two rules drive the design:
- *
- * 1. There is exactly one `requestAnimationFrame` in the app. No entity ever
- *    owns a timer; towers, spawners and effects are all counters advanced
- *    inside `step`.
- *
- * 2. Simulation time is decoupled from display time. `step` is always handed
- *    the same fixed delta, no matter how often the browser decides to paint,
- *    so the game plays identically on a 60Hz laptop and a 144Hz monitor.
- *    `render` receives an interpolation factor and is responsible for drawing
- *    a smooth in-between of the last two simulation states.
+ * The one animation loop in the app. `step` always gets the same fixed delta so
+ * the game plays identically at any refresh rate; `render` gets the leftover
+ * fraction of a tick to interpolate with.
  */
 
 export interface GameLoopHandlers {
-  /** Advance the simulation by exactly `delta` seconds. */
   step: (delta: number, tick: number) => void;
-  /** Draw the world. `alpha` is progress (0..1) from the previous tick to the latest. */
+  /** `alpha` is progress (0..1) from the previous tick to the latest. */
   render: (alpha: number) => void;
 }
 
 export interface GameLoopOptions {
-  /** Logical simulation ticks per second. */
   tickRate?: number;
-  /**
-   * Upper bound on catch-up ticks in a single frame. Without this, one slow
-   * frame makes the next frame do more work, which makes it slower still.
-   */
+  /** Caps catch-up work, so one slow frame cannot cascade into a spiral. */
   maxTicksPerFrame?: number;
-  /**
-   * Longest real delta we are willing to simulate, in seconds. Backgrounded
-   * tabs report huge gaps; we treat them as a short pause instead of
-   * fast-forwarding minutes of gameplay.
-   */
+  /** Longest real delta we will simulate. Hidden tabs report huge gaps. */
   maxFrameDelta?: number;
   perf?: PerfMonitor;
   now?: () => number;
@@ -67,7 +48,7 @@ export class GameLoop {
   private lastTime = 0;
   private hasLastTime = false;
 
-  /** Ticks abandoned because the loop could not keep up. Useful as a health signal. */
+  /** Ticks abandoned because the loop could not keep up. */
   droppedTicks = 0;
 
   constructor(handlers: GameLoopHandlers, options: GameLoopOptions = {}) {
@@ -127,15 +108,12 @@ export class GameLoop {
     return this.paused;
   }
 
-  /**
-   * Fast-forward by running more ticks per second. Tick size is untouched, so
-   * 4x speed is genuinely four times the simulation, not four times as coarse.
-   */
+  /** Runs more ticks per second, never larger ones. */
   setSpeed(multiplier: number): void {
     this.speed = multiplier > 0 ? multiplier : 1;
   }
 
-  /** Runs a frame by hand. Only used by tests, which supply their own clock. */
+  /** For tests, which supply their own clock. */
   runFrame(time: number): void {
     this.advance(time);
   }

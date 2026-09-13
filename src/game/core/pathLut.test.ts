@@ -7,8 +7,7 @@ const result = { x: 0, y: 0 };
 
 describe('PathLut', () => {
   it('matches the exact path within a fraction of a pixel', () => {
-    // The table exists to replace `samplePath` in the hot loop, so the only
-    // thing that matters is that it gives the same answer.
+    // The table replaces `samplePath`, so it has to give the same answer.
     let worst = 0;
     for (let distance = 0; distance <= PATH_LENGTH; distance += 1.7) {
       samplePath(distance, scratch);
@@ -39,8 +38,7 @@ describe('PathLut', () => {
   });
 
   it('gives flyers a shorter route than the road', () => {
-    // Flying straight to the base has to be a real advantage, or the enemy type
-    // is pointless.
+    // Flying straight has to be a real advantage, or the type is pointless.
     expect(AIR_ROUTE_LENGTH).toBeLessThan(PATH_LENGTH);
   });
 });

@@ -1,9 +1,6 @@
 /**
- * Small wrapper around `localStorage`.
- *
- * Private-browsing modes throw on access rather than returning null, so every
- * read and write is guarded: losing a high score is not worth crashing the game
- * over.
+ * `localStorage`, guarded. Private-browsing modes throw on access rather than
+ * returning null, and losing a high score is not worth crashing over.
  */
 
 const HIGH_SCORE_KEY = 'td.highScore';

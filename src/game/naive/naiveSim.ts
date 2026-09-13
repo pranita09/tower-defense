@@ -36,20 +36,13 @@ import { getWave, STARTING_GOLD, STARTING_HEALTH, TOTAL_WAVES } from '../data/wa
 import type { GamePhase, StressRequest } from '../engine';
 
 /**
- * The naive simulation — the project's performance baseline.
+ * The performance baseline, written the way a tower defense is first written: one
+ * heap object per entity in arrays that get `splice`d, a full enemy scan per tower
+ * per tick with a real square root per candidate, another scan for splash, and a
+ * fresh allocation for every shot and spark.
  *
- * This is written the way a tower defense is *first* written, and every choice
- * here is one we later undo:
- *
- * - one heap object per enemy, tower, projectile, particle and damage number,
- *   held in plain arrays that are `splice`d as entities die;
- * - every tower rescans every enemy on every tick to pick a target, using a
- *   real square root per candidate;
- * - splash damage rescans every enemy again;
- * - a fresh object is allocated for every shot, spark and damage number.
- *
- * It plays correctly and it is pleasant at real wave sizes. It falls over long
- * before the required stress load, and measuring exactly where is the point.
+ * It plays correctly and feels fine at real wave sizes. Finding where it falls
+ * over is the point of keeping it.
  */
 
 const PROJECTILE_LIFETIME = 2.5;
@@ -233,8 +226,7 @@ export class NaiveSim {
     if (this.phase !== 'ready') return false;
     if (this.wave >= TOTAL_WAVES) return false;
 
-    // Sending early is rewarded, so a confident player is paid for the risk
-    // instead of just waiting out every countdown.
+    // Sending early is rewarded, so waiting out every countdown is not optimal.
     if (this.restTimer > 0) {
       this.gold += Math.ceil(this.restTimer * EARLY_SEND_BONUS_RATE);
       this.restTimer = 0;
@@ -456,8 +448,7 @@ export class NaiveSim {
 
   private leak(enemy: NaiveEnemy): void {
     if (this.stressTargets) {
-      // A benchmark needs a stable population, so stress enemies loop the
-      // course instead of ending the run.
+      // Stress enemies loop the course, so the population stays stable.
       enemy.segment = 1;
       enemy.traveled = 0;
       enemy.x = enemy.flying ? airPathX(0) : PATH[0].x;
@@ -488,8 +479,7 @@ export class NaiveSim {
       if (tower.recoil > 0) tower.recoil = Math.max(0, tower.recoil - delta * 5);
       tower.cooldownRemaining -= delta;
 
-      // Naive target acquisition: a full scan of every enemy, every tick, for
-      // every tower. This is the O(towers x enemies) term that dominates later.
+      // Every enemy, every tick, every tower: the O(towers x enemies) term.
       let best: NaiveEnemy | null = null;
       let bestProgress = -1;
       for (let e = 0; e < this.enemies.length; e += 1) {
@@ -539,10 +529,7 @@ export class NaiveSim {
     }
   }
 
-  /**
-   * Tesla fire: damage lands instantly and jumps to nearby enemies. Another
-   * full scan of the enemy list, once per extra link in the chain.
-   */
+  /** Instant chain damage, with another full enemy scan per link. */
   private fireChain(tower: NaiveTower, first: NaiveEnemy): void {
     const def = TOWER_DEFS[tower.typeId];
     const stats = def.levels[tower.level - 1];
@@ -784,11 +771,7 @@ export class NaiveSim {
 
   // ── Benchmarking ───────────────────────────────────────────────────────────
 
-  /**
-   * Injects a synthetic load and then holds it: counts are topped up every tick
-   * so the scenario is sustained for the whole measurement window rather than
-   * decaying as soon as the towers start killing things.
-   */
+  /** Injects a synthetic load and tops it up every tick, so it is sustained. */
   stress(request: StressRequest): void {
     if (request.enemies <= 0 && request.towers <= 0 && request.projectiles <= 0) {
       this.stressTargets = null;
@@ -806,8 +789,7 @@ export class NaiveSim {
   private fillTowers(target: number): void {
     if (this.towers.length >= target) return;
 
-    // Walk buildable tiles in a coarse stride first so towers spread over the
-    // whole map instead of clumping in one corner.
+    // A coarse stride first, so towers spread out instead of clumping.
     for (let stride = 3; stride >= 1 && this.towers.length < target; stride -= 1) {
       for (let row = 0; row < GRID_ROWS && this.towers.length < target; row += stride) {
         for (let col = 0; col < GRID_COLS && this.towers.length < target; col += stride) {
@@ -826,8 +808,7 @@ export class NaiveSim {
     while (this.enemies.length < targets.enemies) {
       const typeId = this.rng.int(ENEMY_DEFS.length);
       const enemy = this.spawnEnemy(typeId, false, this.rng.next() * PATH_LENGTH);
-      // Stress enemies are tough on purpose: the point is to measure a full
-      // field, not to watch it evaporate.
+      // Tough on purpose: the point is to measure a full field, not watch it thin.
       enemy.maxHp *= 40;
       enemy.hp = enemy.maxHp;
     }

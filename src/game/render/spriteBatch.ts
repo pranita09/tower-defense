@@ -2,17 +2,9 @@ import { SPRITE_UVS } from './atlas';
 import { unpackBlue, unpackGreen, unpackRed } from '../data/palette';
 
 /**
- * Instanced sprite batch.
- *
- * The naive renderer issues a handful of Canvas 2D commands per entity, so cost
- * scales with the number of draw calls: at 5,000 enemies that is tens of
- * thousands of state changes and path fills per frame, all on the main thread.
- *
- * Here every sprite is 13 floats appended to one array. At the end of the frame
- * the array is uploaded once and drawn with a single `drawArraysInstanced` call,
- * so the CPU cost per sprite is a few array writes and the GPU does the rest.
- * Adding sprites gets roughly ten times cheaper, and the draw call count stops
- * depending on the entity count at all.
+ * Every sprite is 13 floats appended to one array, uploaded once per frame and
+ * drawn with a single `drawArraysInstanced`. So the per-sprite CPU cost is a few
+ * array writes, and the draw call count stops depending on the entity count.
  */
 
 /** x, y, halfWidth, halfHeight, rotation, u0, v0, u1, v1, r, g, b, a */
@@ -74,7 +66,7 @@ export class SpriteBatch {
   readonly capacity: number;
   /** Sprites appended since the last flush. */
   count = 0;
-  /** Sprites rejected because they fell outside the visible area. */
+  /** Sprites rejected for falling outside the visible area. */
   culled = 0;
 
   private readonly gl: WebGL2RenderingContext;
@@ -163,11 +155,7 @@ export class SpriteBatch {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   }
 
-  /**
-   * Sets the visible world rectangle. Anything fully outside is dropped before
-   * it reaches the buffer, so off-screen entities cost a bounds test instead of
-   * vertex work and fill rate.
-   */
+  /** Anything outside this is dropped before it reaches the buffer. */
   setCullBounds(minX: number, minY: number, maxX: number, maxY: number): void {
     this.cullMinX = minX;
     this.cullMinY = minY;
@@ -226,10 +214,7 @@ export class SpriteBatch {
     this.count += 1;
   }
 
-  /**
-   * Uploads and draws everything appended since `begin`.
-   * `scale`/`offset` map world coordinates into clip space.
-   */
+  /** `scale`/`offset` map world coordinates into clip space. */
   flush(scaleX: number, scaleY: number, offsetX: number, offsetY: number): void {
     if (this.count === 0) return;
     const gl = this.gl;

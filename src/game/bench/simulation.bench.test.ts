@@ -15,15 +15,9 @@ import { FastSim } from '../fast/fastSim';
 import { NaiveSim } from '../naive/naiveSim';
 
 /**
- * Headless simulation benchmarks, with no rendering involved.
- *
- * Run with `npm run bench`. They are skipped in the normal test run because they
- * deliberately take seconds rather than milliseconds.
- *
- * Measuring the simulation on its own matters: in the browser both the naive
- * renderer and the naive simulation miss the frame budget at high entity counts,
- * and without separating them it is impossible to say which one to fix, or how
- * much of the final improvement came from which change.
+ * Simulation-only benchmarks, run with `npm run bench` and skipped otherwise
+ * because they take seconds. Separating simulation from rendering is what makes it
+ * possible to say which of the two a slow frame came from.
  */
 
 const TICK = 1 / 60;
@@ -68,10 +62,7 @@ function measure(create: () => Steppable, scenario: Scenario): number {
   return (performance.now() - start) / MEASURED_TICKS;
 }
 
-/**
- * Read through `globalThis` so the browser-targeted tsconfig does not need
- * Node's type definitions just to gate a benchmark.
- */
+/** Via `globalThis`, so the browser tsconfig needs no Node type definitions. */
 const nodeProcess = (
   globalThis as {
     process?: {
@@ -164,18 +155,11 @@ const BUILD_ORDER = [
 ];
 
 /**
- * A whole game, played headlessly by a gold-limited bot.
- *
- * This covers two requirements at once.
- *
- * **Balance.** The bot only ever spends gold it has earned, builds near the road
- * and upgrades in rotation — a competent but unremarkable player. If the curve
- * were unwinnable or trivially winnable, this test would say so, and it is how
- * the health, bounty and boss multipliers were actually tuned.
- *
- * **Memory stability.** 50 waves is tens of thousands of spawns and deaths. If
- * anything in the hot path allocated per entity, the heap would climb steadily
- * across the run instead of wobbling around a flat line.
+ * A whole game played by a gold-limited bot, covering two requirements at once.
+ * Balance: the bot is a competent but unremarkable player, so an unwinnable or
+ * trivial curve shows up here — this is how the multipliers were tuned. Memory:
+ * 50 waves is tens of thousands of spawns, so any per-entity allocation in the hot
+ * path would show as a climbing heap.
  */
 describe.skipIf(!benchEnabled)('full 50-wave run', () => {
   it('is winnable by a gold-limited player, with flat memory', () => {
@@ -261,14 +245,12 @@ describe.skipIf(!benchEnabled)('full 50-wave run', () => {
 
     // Slots all came back, which is the structural reason memory stays flat.
     expect(sim.enemies.freeSlots).toBe(sim.enemies.capacity);
-    // Victory freezes the simulation, so the last few shots are still in flight
-    // and their slots are legitimately still held. Bounded, not zero.
+    // Victory freezes the sim mid-flight, so a few slots are legitimately held.
     expect(sim.projectiles.activeCount).toBeLessThan(64);
 
     if (baseline !== null && finalHeap !== null) {
-      // Generous, because Node collects when it feels like it. The point is that
-      // there is no unbounded growth across 50 waves: every buffer the
-      // simulation needs was reserved before the first tick.
+      // Generous, because Node collects when it likes. The point is that there is
+      // no unbounded growth: every buffer was reserved before the first tick.
       expect(finalHeap - baseline).toBeLessThan(24);
     }
   });

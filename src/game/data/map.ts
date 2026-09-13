@@ -1,10 +1,7 @@
 /**
- * The battlefield: a fixed-size tile grid with a hand-authored path from the
- * spawn point to the base.
- *
- * World coordinates are always these logical pixels, never screen pixels. The
- * camera scales them to fit the window, so gameplay is identical on every
- * display size and a saved click position means the same thing everywhere.
+ * A fixed tile grid with a hand-authored path. Coordinates here are always world
+ * pixels, never screen pixels — the camera does the scaling, so the game plays
+ * the same at every window size.
  */
 
 export const TILE_SIZE = 32;
@@ -14,11 +11,9 @@ export const WORLD_WIDTH = GRID_COLS * TILE_SIZE;
 export const WORLD_HEIGHT = GRID_ROWS * TILE_SIZE;
 
 /**
- * Path corners in tile coordinates. The first point sits outside the grid so
- * enemies walk in from off-screen; the last is the base.
- *
- * The route deliberately doubles back several times: corners are where enemies
- * linger inside a tower's range, so they are the interesting places to build.
+ * Path corners in tiles. The first sits off-grid so enemies walk in from
+ * off-screen; the last is the base. It doubles back on purpose, since corners are
+ * where enemies linger in range and so where building is interesting.
  */
 const WAYPOINT_TILES: readonly (readonly [number, number])[] = [
   [-1, 2],
@@ -64,11 +59,7 @@ export const PATH_LENGTH = SEGMENT_OFFSETS[SEGMENT_OFFSETS.length - 1];
 
 export const BASE_POSITION: Waypoint = PATH[PATH.length - 1];
 
-/**
- * Flying enemies ignore the road and take the straight line from the spawn
- * point to the base, so their position is also a function of one distance
- * scalar — just along a different route.
- */
+/** Flyers ignore the road and fly straight from spawn to base. */
 export const AIR_START: Waypoint = PATH[0];
 export const AIR_LENGTH = Math.hypot(BASE_POSITION.x - AIR_START.x, BASE_POSITION.y - AIR_START.y);
 export const AIR_DIR_X = (BASE_POSITION.x - AIR_START.x) / AIR_LENGTH;
@@ -83,11 +74,8 @@ export function airPathY(distance: number): number {
 }
 
 /**
- * Tiles covered by the path, which cannot be built on.
- *
- * Built by walking the polyline and marking every tile the centre line passes
- * through, plus its perpendicular neighbours, so the road reads as a corridor
- * roughly two tiles wide rather than a one-tile line.
+ * Tiles the road covers, which cannot be built on. Neighbours are marked too, so
+ * the road reads as a corridor about two tiles wide rather than a single line.
  */
 export const BLOCKED_TILES: Uint8Array = (() => {
   const blocked = new Uint8Array(GRID_COLS * GRID_ROWS);
@@ -130,12 +118,7 @@ export interface PathPoint {
   segment: number;
 }
 
-/**
- * Position at a given distance along the path.
- *
- * This walks the segment list, which is fine for the handful of calls made
- * during setup. The per-enemy movement in the simulation does *not* use it.
- */
+/** Walks the segment list. Setup only — per-enemy movement uses the lookup table. */
 export function samplePath(
   distance: number,
   out: PathPoint = { x: 0, y: 0, segment: 0 }

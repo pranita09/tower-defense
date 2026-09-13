@@ -44,25 +44,14 @@ import type { CanvasViewport } from '../render/viewport';
 import { MAX_ARCS, MAX_LABELS, MAX_PARTICLES, type FastSim } from './fastSim';
 
 /**
- * The optimized renderer.
+ * The optimized renderer. Everything dynamic is appended to one instance buffer
+ * and issued as a single draw call; everything static is baked into a texture and
+ * drawn as one quad. Off-screen sprites never reach the buffer, and detail work
+ * drops out on its own once the field gets crowded.
  *
- * Two decisions do most of the work:
- *
- * 1. **Everything dynamic becomes instance data.** Enemies, health bars,
- *    projectiles, particles and towers are appended to one buffer and issued as
- *    a single instanced draw call, so per-sprite CPU cost is a few array writes
- *    instead of a full Canvas 2D state change and path fill.
- * 2. **Everything static is pre-rendered.** Terrain and road are baked into a
- *    texture once and drawn as one quad.
- *
- * On top of that: sprites outside the visible rectangle never reach the buffer,
- * and detail work (health bars, facing, flyer shadows) drops out automatically
- * once the field gets crowded.
- *
- * Text is the one thing WebGL is bad at, so damage numbers and the few vector
- * flourishes are drawn on a thin transparent 2D canvas layered on top. That
- * layer only ever handles a bounded number of items, so it cannot scale with the
- * enemy count.
+ * Text is the one thing WebGL is bad at, so damage numbers and a few vector
+ * flourishes go on a transparent 2D canvas on top. That layer only ever handles a
+ * bounded number of items, so it cannot scale with the enemy count.
  */
 
 const SPRITE_CAPACITY = 32_768;
@@ -336,8 +325,7 @@ export class FastRenderer {
       const kind = sim.pKind[slot];
       const size = sim.pSplash[slot] > 0 ? 5.5 : 3.2;
 
-      // The glow is a texture read, not a `shadowBlur` — the naive renderer's
-      // per-projectile blur is one of its most expensive habits.
+      // A texture read, not a `shadowBlur`, which is what the naive renderer does.
       this.batch.push(SPRITE_GLOW, x, y, size * 2.6, size * 2.6, 0, TOWER_ACCENTS[kind], 0.4);
       this.batch.push(SPRITE_CIRCLE, x, y, size, size, 0, TOWER_ACCENTS[kind], 1);
     }
@@ -353,10 +341,7 @@ export class FastRenderer {
     }
   }
 
-  /**
-   * The 2D layer: text and a few vector flourishes. Everything here is bounded
-   * by a fixed buffer size or by the selection, never by the entity count.
-   */
+  /** The 2D layer. Bounded by buffer size or selection, never by entity count. */
   private drawOverlay(
     sim: FastSim,
     viewport: CanvasViewport,

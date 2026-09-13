@@ -2,11 +2,8 @@ import { ENEMY_DEFS } from './enemies';
 import { TOWER_DEFS } from './towers';
 
 /**
- * Colours packed as 0xRRGGBB integers.
- *
- * The optimized simulation stores a particle's colour as one number in a typed
- * array rather than a string reference, and the WebGL renderer needs floats per
- * channel anyway. Packing once at startup avoids parsing hex strings per frame.
+ * Colours packed as 0xRRGGBB integers, so a particle's colour is one number in a
+ * typed array rather than a string reference parsed every frame.
  */
 
 export function packHex(hex: string): number {

@@ -1,22 +1,13 @@
 /**
- * Fixed-capacity slot allocator for entities stored in parallel typed arrays.
- *
- * Entities are identified by a slot index, which is also their index in every
- * data array. Three problems get solved here:
- *
- * - **No allocation.** Capacity is reserved once at startup, so a wave of 200
- *   deaths creates no garbage and the heap stays flat for a whole run.
- * - **O(1) removal.** Nothing is `splice`d. A freed slot goes onto a stack for
- *   reuse, and the dense `active` list is compacted by swapping in its tail.
- * - **Safe references.** Projectiles point at a target by slot, and a slot gets
- *   reused. Each release bumps a generation counter, so a stale reference is
- *   detected instead of silently hitting whatever moved in.
+ * Fixed-capacity slot allocator. A slot index is the entity's index in every
+ * parallel data array. Capacity is reserved once, removal is an O(1) swap rather
+ * than a `splice`, and each release bumps a generation counter so a projectile
+ * holding a stale slot is detected instead of hitting whatever moved in.
  */
 export class SlotPool {
   readonly capacity: number;
   /** Dense list of live slots. Only the first `activeCount` entries are valid. */
   readonly active: Int32Array;
-  /** Bumped whenever a slot is released, to invalidate old references. */
   readonly generation: Uint16Array;
 
   activeCount = 0;
@@ -74,7 +65,7 @@ export class SlotPool {
     return slot >= 0 && slot < this.capacity && this.live[slot] === 1;
   }
 
-  /** True when the slot is still occupied by the entity the caller remembered. */
+  /** True when the slot still holds the entity the caller remembered. */
   matches(slot: number, generation: number): boolean {
     return this.isLive(slot) && this.generation[slot] === generation;
   }
@@ -87,8 +78,7 @@ export class SlotPool {
   }
 
   private fillFreeStack(): void {
-    // Reverse order so the first allocations hand out low slots, which keeps
-    // early iteration contiguous and cache-friendly.
+    // Reversed, so the first allocations hand out low slots and stay contiguous.
     for (let i = 0; i < this.capacity; i += 1) {
       this.free[i] = this.capacity - 1 - i;
     }

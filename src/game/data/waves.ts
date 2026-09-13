@@ -1,22 +1,9 @@
 import { ENEMY_ARMORED, ENEMY_FLYER, ENEMY_GRUNT, ENEMY_RUNNER, ENEMY_SPLITTER } from './enemies';
 
 /**
- * The 50-wave difficulty curve.
- *
- * Waves are generated from the wave number rather than hand-written, so the
- * curve is a handful of readable formulas instead of a thousand-line table, and
- * it stays a pure function of the wave number, which keeps runs reproducible.
- *
- * Four pressures ramp independently, which is what stops the curve feeling like
- * a single number going up:
- *
- * - **Health** rises geometrically, so raw damage output must keep pace.
- * - **Armor** rises in steps, which retires low-damage towers and forces
- *   upgrades rather than more of the same.
- * - **Composition** widens as new enemy types unlock, so a defence that only
- *   answers one threat starts leaking.
- * - **Density** rises as the spawn interval shortens, which is what eventually
- *   makes splash and slow towers mandatory rather than optional.
+ * The 50-wave curve, generated from the wave number so it stays a few readable
+ * formulas and a pure function. Health, armor, composition and spawn density ramp
+ * independently, so difficulty is not just one number going up.
  */
 
 export const TOTAL_WAVES = 50;
@@ -44,13 +31,10 @@ export interface WaveDef {
   number: number;
   groups: readonly WaveGroup[];
   totalEnemies: number;
-  /** Multiplier applied to every enemy's base health. */
   healthScale: number;
-  /** Multiplier applied to every enemy's base speed. */
   speedScale: number;
   /** Added to every enemy's armor. */
   armorBonus: number;
-  /** Multiplier applied to kill bounties, so late waves stay fundable. */
   bountyScale: number;
   /** Gold granted for clearing the wave. */
   reward: number;
@@ -125,10 +109,8 @@ function buildWave(number: number): WaveDef {
     number,
     groups,
     totalEnemies,
-    // Chosen by playing the curve out headlessly (see the bench): steep enough
-    // that wave 50 is roughly sixty times wave 1, shallow enough that a strong
-    // board can still out-damage it. Total pressure grows far faster than this,
-    // because head count and armor climb alongside health.
+    // Tuned by playing the curve out headlessly: steep enough that wave 50 is
+    // ~60x wave 1, shallow enough that a strong board can still out-damage it.
     healthScale: Math.pow(1.09, number - 1),
     speedScale: 1 + Math.min(0.45, (number - 1) * 0.007),
     armorBonus: Math.floor(number / 9),

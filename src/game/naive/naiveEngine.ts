@@ -14,11 +14,7 @@ import type { CanvasViewport } from '../render/viewport';
 import { NaiveRenderer, type HoverState } from './naiveRenderer';
 import { NaiveSim } from './naiveSim';
 
-/**
- * Wires the naive simulation and renderer into the engine interface the React
- * shell talks to, so the optimized implementation can be swapped in later
- * without the UI noticing.
- */
+/** Wires the naive simulation and renderer into the shared engine interface. */
 export class NaiveEngine implements GameEngine {
   readonly mode: EngineMode = 'naive';
   readonly rendererLabel = 'Canvas 2D, immediate mode';
@@ -71,9 +67,8 @@ export class NaiveEngine implements GameEngine {
   }
 
   getRenderStats(): RenderStats {
-    // The naive renderer issues Canvas 2D commands per entity, so there is no
-    // sprite buffer to report. The draw-call estimate is deliberately rough; the
-    // point is that it grows with the entity count instead of staying at two.
+    // A rough estimate: Canvas 2D has no sprite buffer to count. The point is that
+    // it grows with the entity count instead of staying at two.
     const sim = this.sim;
     return {
       sprites: sim.enemies.length + sim.projectiles.length + sim.towers.length,

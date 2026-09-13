@@ -9,22 +9,15 @@ import {
 } from '../data/map';
 
 /**
- * Precomputed path positions.
- *
- * An enemy's position is fully determined by one number: how far it has walked.
- * The naive simulation recovers a position by stepping through waypoints with a
- * square root per step; this table turns the same question into two array reads
- * and a lerp, with no branching on segment boundaries.
- *
- * It also shrinks the per-enemy state. Movement becomes `distance += speed * dt`,
- * so there is no direction vector to store or renormalise, and a corner is
- * handled by the table rather than by per-enemy bookkeeping.
+ * Positions sampled along the road, so movement is `distance += speed * dt` and
+ * a lookup is two array reads and a lerp. The naive version walks the waypoint
+ * list with a square root per step instead.
  */
 
 const SAMPLE_STEP = 4;
 
 export class PathLut {
-  /** Sampled x positions, one every `step` world pixels. */
+  /** Sampled positions, one every `step` world pixels. */
   readonly xs: Float32Array;
   readonly ys: Float32Array;
   readonly step: number;
@@ -55,10 +48,7 @@ export class PathLut {
     }
   }
 
-  /**
-   * Convenience lookup for callers outside the hot loop. The simulation reads
-   * `xs`/`ys` directly so it can share the index arithmetic between both axes.
-   */
+  /** For callers outside the hot loop; the simulation reads `xs`/`ys` directly. */
   positionAt(distance: number, out: { x: number; y: number }): void {
     let t = distance * this.invStep;
     if (t < 0) t = 0;
@@ -73,10 +63,7 @@ export class PathLut {
 /** The road that ground enemies walk. */
 export const GROUND_LUT = new PathLut(PATH_LENGTH, SAMPLE_STEP, samplePath);
 
-/**
- * Flyers take a straight line, so their positions need no table at all — the
- * same distance scalar drives a plain linear equation.
- */
+/** Flyers go straight, so the same distance scalar drives a linear equation. */
 export const AIR_ORIGIN_X = AIR_START.x;
 export const AIR_ORIGIN_Y = AIR_START.y;
 export const AIR_STEP_X = AIR_DIR_X;

@@ -27,15 +27,13 @@ import { TowerShop } from './TowerShop';
 import './GameView.css';
 
 /**
- * The React shell.
+ * React owns the HUD and nothing else. It reads game state on a timer rather than
+ * per frame, and the engine never calls into React, so entity counts cannot cause
+ * a re-render.
  *
- * React owns the HUD and nothing else. It reads game state on a timer rather
- * than per frame, and the engine never calls into React, so no amount of
- * on-screen entities can cause a re-render.
- *
- * Two canvases are stacked: the WebGL surface underneath, and a transparent 2D
- * canvas above it for text. The naive engine draws its whole world onto the 2D
- * layer instead, which is why swapping implementations needs no DOM changes.
+ * Two canvases are stacked: WebGL underneath, a transparent 2D layer above it for
+ * text. The naive engine draws its whole world onto the 2D layer instead, so
+ * swapping implementations needs no DOM changes.
  */
 const HUD_REFRESH_MS = 120;
 const BANNER_MS = 1700;
@@ -113,8 +111,7 @@ export function GameView() {
       powerPreference: 'high-performance',
     });
     if (!gl) {
-      // No WebGL2 means the optimized renderer cannot run; the game still works
-      // on the Canvas 2D path, just slower.
+      // Without WebGL2 the game still runs on the Canvas 2D path, just slower.
       setWebglMissing(true);
       setMode('naive');
     }
@@ -142,8 +139,7 @@ export function GameView() {
       { perf: perfMonitor }
     );
     loopRef.current = loop;
-    // Runs immediately but paused, so the board is visible behind the title
-    // screen without the wave timer ticking down.
+    // Paused, so the board shows behind the title screen without the timer running.
     loop.pause();
     loop.start();
 
@@ -202,8 +198,7 @@ export function GameView() {
     setState(engine.getState());
 
     if (engine.mode === 'naive' && contexts.gl) {
-      // The naive renderer paints the 2D layer opaquely on top, but leaving a
-      // stale WebGL frame underneath is asking for confusion.
+      // The naive renderer covers this layer, but a stale frame under it confuses.
       contexts.gl.clearColor(0, 0, 0, 1);
       contexts.gl.clear(contexts.gl.COLOR_BUFFER_BIT);
     }
@@ -352,8 +347,7 @@ export function GameView() {
 
       if (typeId !== null) {
         const { col, row } = engine.tileAt(x, y);
-        // Keep the build type selected on success so several towers can be
-        // placed in a row; fall back to inspecting whatever was clicked.
+        // Stay in build mode on success, so towers can be placed in a row.
         if (engine.placeTower(col, row, typeId)) {
           audioRef.current.place();
         } else {
@@ -377,10 +371,7 @@ export function GameView() {
     setZoom(engineRef.current?.getZoom() ?? 1);
   }, []);
 
-  /**
-   * Wheel zoom needs a non-passive listener to cancel the page scroll, which
-   * React's `onWheel` cannot guarantee.
-   */
+  /** Non-passive, to cancel page scroll — which React's `onWheel` cannot promise. */
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;

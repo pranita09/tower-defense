@@ -1,9 +1,6 @@
 /**
- * Seeded pseudo-random number generator (mulberry32).
- *
- * The simulation never calls `Math.random`. A seeded generator means a stress
- * run can be repeated exactly, which is the difference between a benchmark and
- * an anecdote.
+ * Mulberry32. The simulation never calls `Math.random`, so a stress run can be
+ * repeated exactly — the difference between a benchmark and an anecdote.
  */
 export class Rng {
   private state: number;

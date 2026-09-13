@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GameLoop, type GameLoopOptions } from './loop';
 
-/**
- * The loop is driven by an injected clock and scheduler, so a "second of
- * gameplay at 144Hz" is just a list of timestamps. No real frames involved.
- */
+/** An injected clock and scheduler, so "a second at 144Hz" is a list of timestamps. */
 function harness(options: Partial<GameLoopOptions> = {}) {
   const stepDeltas: number[] = [];
   const alphas: number[] = [];
@@ -48,9 +45,8 @@ describe('GameLoop fixed timestep', () => {
     const at144 = harness();
     at144.advance(144, 1000 / 144);
 
-    // A second of real time is a second of simulated time either way. Both may
-    // land one tick short because the leftover sits in the accumulator, which
-    // is exactly what the render interpolation factor is for.
+    // A second of real time is a second of simulated time either way. Both may land
+    // a tick short, with the leftover sitting in the accumulator.
     expect(at60.loop.tickCount).toBeGreaterThanOrEqual(59);
     expect(at60.loop.tickCount).toBeLessThanOrEqual(60);
     expect(Math.abs(at60.loop.tickCount - at144.loop.tickCount)).toBeLessThanOrEqual(1);
@@ -102,8 +98,7 @@ describe('GameLoop catch-up safety', () => {
     const { loop, advance } = harness({ maxTicksPerFrame: 2 });
     advance(30, 100); // 10 FPS, i.e. six ticks owed per frame
 
-    // Each frame runs its two ticks and discards the rest, so the loop stays
-    // responsive rather than spiralling.
+    // Each frame runs its two ticks and discards the rest instead of spiralling.
     expect(loop.tickCount).toBe(60);
     expect(loop.droppedTicks).toBeGreaterThan(0);
   });

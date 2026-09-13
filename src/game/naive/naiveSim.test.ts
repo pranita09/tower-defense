@@ -116,8 +116,7 @@ describe('base damage', () => {
   it('leaks cost health, and an undefended base eventually falls', () => {
     const sim = new NaiveSim();
     sim.startWave();
-    // No towers at all, so every enemy walks the full path unopposed. A single
-    // wave does not carry 20 damage, so this takes several waves.
+    // Unopposed, but one wave does not carry 20 damage, so this takes several.
     run(sim, 400);
 
     expect(sim.leaks).toBeGreaterThan(0);
@@ -133,8 +132,7 @@ describe('combat', () => {
     sim.placeTower(tile.col, tile.row, TOWER_GUN);
     sim.startWave();
 
-    // Counting shots rather than sampling the live projectile list, which is
-    // empty at any moment when the last shot has already landed.
+    // Counting shots, since the live projectile list is empty between hits.
     run(sim, 1);
     expect(sim.shotsFired).toBeGreaterThan(0);
   });
@@ -142,8 +140,7 @@ describe('combat', () => {
   it('kills enemies and pays gold and score', () => {
     const sim = new NaiveSim();
     sim.gold = 100_000;
-    // A kill zone over the opening straight. One gun turret cannot out-damage a
-    // grunt during its brief pass, which is the point of the range mechanic.
+    // A kill zone over the opening straight; one turret cannot finish a grunt alone.
     let towers = 0;
     for (let row = 0; row < 22; row += 1) {
       for (let col = 0; col < 8; col += 1) {

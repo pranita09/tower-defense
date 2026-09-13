@@ -69,8 +69,7 @@ describe('SpatialGrid', () => {
     const ys = new Float32Array(count);
     const active = new Int32Array(count);
 
-    // Deterministic pseudo-random spread, including points outside the world so
-    // the clamping into edge cells is covered too.
+    // Deterministic spread, including off-world points so edge clamping is covered.
     let seed = 12345;
     const random = () => {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;

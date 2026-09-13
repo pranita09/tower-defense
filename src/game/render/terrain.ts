@@ -9,16 +9,9 @@ import {
 } from '../data/map';
 
 /**
- * The static layer: terrain tiles and the road.
- *
- * Nothing in here ever changes, which makes it a clean illustration of the
- * difference between the two renderers. The naive one calls this every frame,
- * paying for roughly 250 tile fills and four wide stroked polylines 60 times a
- * second. The optimized one calls it once into an offscreen canvas, uploads the
- * result as a texture, and then redraws the whole battlefield as a single quad.
- *
- * Both share this function so the two modes look identical and the video is
- * comparing performance rather than art.
+ * Terrain tiles and the road. Nothing here ever changes: the naive renderer
+ * repaints it every frame, the optimized one bakes it into a texture once. Both
+ * share this function so the two modes look identical.
  */
 export function paintTerrain(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = '#111a27';

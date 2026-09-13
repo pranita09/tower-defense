@@ -1,22 +1,11 @@
 /**
- * End-to-end check against a real browser.
+ * Drives the built game in a real browser — play, build, upgrade, run a wave, load
+ * the stress preset, zoom — and asserts on what the DOM reports. Covers what Node
+ * tests cannot: WebGL, canvas and layout. It caught a stacking bug where the
+ * overlay canvas sat above the HUD and swallowed every click.
  *
- * Unit tests cover the simulation, but they run in Node, where there is no
- * WebGL, no canvas and no layout. That gap is not academic: it hid a stacking
- * bug where the transparent overlay canvas sat above the HUD and swallowed every
- * click, which no amount of headless testing would have caught.
- *
- * So this drives the built game the way a player does — click Play, buy a tower,
- * place it, upgrade it, run a wave, load the stress scenario, zoom in — and
- * asserts on what the DOM reports back.
- *
- * Usage:
- *   npm run build && npm run preview     # in one terminal
- *   npm run smoke                        # in another
- *
- * Environment:
- *   SMOKE_URL     defaults to http://localhost:4173/
- *   CHROME_PATH   defaults to the usual Chrome locations
+ * Run `npm run build && npm run preview`, then `npm run smoke`.
+ * Override with SMOKE_URL and CHROME_PATH.
  */
 
 import { existsSync } from 'node:fs';

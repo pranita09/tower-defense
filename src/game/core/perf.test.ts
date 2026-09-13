@@ -52,8 +52,7 @@ describe('PerfMonitor', () => {
 
   it('keeps percentiles bounded when frames exceed the histogram range', () => {
     const monitor = new PerfMonitor({ now: () => 0 });
-    // 400ms overflows the 128ms histogram but is still a real, painful frame
-    // rather than a stall, so it must be reported.
+    // Overflows the 128ms histogram, but is a real frame rather than a stall.
     feed(monitor, [...repeat(16, 10), 400]);
 
     const snapshot = monitor.snapshot();
@@ -64,8 +63,7 @@ describe('PerfMonitor', () => {
 
   it('excludes tab stalls instead of counting them as slow frames', () => {
     const monitor = new PerfMonitor({ now: () => 0 });
-    // 60 good frames with a minute-long gap in the middle, as happens when the
-    // tab is backgrounded.
+    // 60 good frames with a minute-long gap, as when the tab is backgrounded.
     feed(monitor, [...repeat(1000 / 60, 30), 60_000, ...repeat(1000 / 60, 30)]);
 
     const snapshot = monitor.snapshot();

@@ -19,8 +19,7 @@ describe('wave curve', () => {
   });
 
   it('gets harder every wave without exception', () => {
-    // Boss groups make the raw head count dip the wave after a boss, so the
-    // monotonic invariant is on the regular population.
+    // Head count dips after a boss wave, so the invariant is on regular enemies.
     const regularEnemies = (wave: (typeof WAVES)[number]) =>
       wave.groups.reduce((total, group) => (group.boss ? total : total + group.count), 0);
 
@@ -38,9 +37,7 @@ describe('wave curve', () => {
     const first = WAVES[0];
     const last = WAVES[TOTAL_WAVES - 1];
 
-    // What the player actually faces is total health on the field, which is head
-    // count multiplied by the health scale. Judging the curve on the multiplier
-    // alone understates it badly, because the population grows too.
+    // Total health on the field, not the multiplier alone: the population grows too.
     expect(waveHealth(last) / waveHealth(first)).toBeGreaterThan(500);
     expect(last.healthScale / first.healthScale).toBeGreaterThan(40);
     expect(last.totalEnemies).toBeGreaterThan(first.totalEnemies * 8);

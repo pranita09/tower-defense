@@ -2,15 +2,9 @@ import type { EngineMode } from '../game/engine';
 import './panels.css';
 
 /**
- * Switches between the two implementations at runtime.
- *
- * This is the whole point of keeping the naive version around: the same game,
- * the same content and the same stress presets, running on the first-pass
- * implementation or the optimized one, so the difference in the performance
- * overlay is a fair comparison rather than a claim.
- *
- * Switching rebuilds the world, because the two simulations do not share a
- * memory layout and pretending otherwise would be a lie about what changed.
+ * Switches implementations at runtime: same game, same content, same stress
+ * presets, so the overlay is a fair comparison. Switching restarts the run, since
+ * the two simulations share no memory layout.
  */
 
 interface EngineToggleProps {

@@ -4,11 +4,8 @@ import { STARTING_GOLD, STARTING_HEALTH, TOTAL_WAVES } from '../game/data/waves'
 import './StartScreen.css';
 
 /**
- * Title screen.
- *
- * It exists for two reasons beyond presentation: a player who has never seen a
- * tower defense game needs the rules in one place, and browsers will not start
- * audio until the player has clicked something.
+ * Title screen. Puts the rules in one place, and gives browsers the click they
+ * require before audio can start.
  */
 
 interface StartScreenProps {

@@ -30,9 +30,8 @@ function findBuildableTile(sim: FastSim): { col: number; row: number } {
 }
 
 /**
- * These mirror the naive simulation's tests on purpose. The optimized version is
- * only worth anything if it plays the same game, so both implementations are
- * held to the same behavioural contract.
+ * These mirror the naive tests on purpose: the optimized version is only worth
+ * anything if it plays the same game.
  */
 
 describe('economy', () => {
@@ -73,8 +72,7 @@ describe('economy', () => {
   });
 
   it('keeps the tile index correct after a tower in the middle is sold', () => {
-    // Towers are swap-removed from a dense array, so the moved tower's tile has
-    // to be re-pointed or the board and the array disagree.
+    // Swap-removal has to re-point the moved tower's tile, or the board disagrees.
     const sim = new FastSim();
     sim.gold = 10_000;
 
@@ -275,12 +273,10 @@ describe('enemy behaviour', () => {
     sim.eArmor[slot] = 0;
     sim.eSpeed[slot] = 30;
 
-    // Short enough that the between-waves timer cannot send wave 2 and pollute
-    // the kill count.
+    // Short enough that the rest timer cannot send wave 2 into the kill count.
     run(sim, 6);
 
-    // One enemy went in; the splitter plus its three children came out, so more
-    // kills than spawns is the whole point of the type.
+    // One spawn in, four kills out: more kills than spawns is the point of the type.
     expect(sim.kills).toBeGreaterThan(1);
     expect(sim.kills).toBeLessThanOrEqual(1 + ENEMY_DEFS[ENEMY_SPLITTER].splitCount);
   });
@@ -350,8 +346,7 @@ describe('memory behaviour', () => {
 
     sim.reset();
 
-    // No leaked slots means the next run starts from the same clean state, which
-    // is what keeps memory flat across a long session.
+    // No leaked slots, so a long session of restarts keeps memory flat.
     expect(sim.enemies.freeSlots).toBe(sim.enemies.capacity);
     expect(sim.projectiles.freeSlots).toBe(sim.projectiles.capacity);
   });

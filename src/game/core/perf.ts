@@ -1,27 +1,16 @@
 /**
- * Frame timing instrumentation.
+ * Frame timing. The headline number is the frame *interval*, since that is what
+ * the player perceives and it includes browser work outside our callbacks; the
+ * CPU figures are diagnostics that explain why an interval was long.
  *
- * The number that matters is the *frame interval* — wall-clock time between
- * consecutive animation frames — because that is what the player actually
- * perceives, and it includes browser work (compositing, GC) that happens
- * outside our own callbacks. CPU time spent inside `step` and `render` is
- * tracked separately as a diagnostic: it tells us *why* an interval was long.
- *
- * Percentiles come from a fixed-size histogram rather than a list of samples.
- * That keeps the cost O(1) per frame with zero allocation, and means a
- * measurement window can run for an entire 50-wave game without growing.
+ * Percentiles use a fixed-size histogram, so a window is O(1) per frame with no
+ * allocation and can run for a whole game without growing.
  */
 
-/** Below this, we are under 45 FPS. */
 export const FRAME_BUDGET_45FPS_MS = 1000 / 45;
-/** The assignment's hard ceiling: fewer than 5% of frames may exceed this. */
 export const FRAME_BUDGET_LIMIT_MS = 33;
 
-/**
- * An interval this long is not a slow frame — the tab was hidden, the machine
- * slept, or a debugger was attached. Counting it would poison the window
- * average for minutes, so it is tallied separately instead of silently kept.
- */
+/** Past this an interval means a hidden tab or a sleeping machine, not a slow frame. */
 export const STALL_THRESHOLD_MS = 500;
 
 const BUCKET_MS = 0.5;
@@ -29,10 +18,9 @@ const BUCKET_COUNT = 256; // covers 0..128ms, with a final overflow bucket
 const RECENT_SAMPLES = 180;
 const EMA_WEIGHT = 0.08;
 
+/** All ms values; the CPU figures are exponentially smoothed per frame. */
 export interface PerfSnapshot {
-  /** Average FPS across the whole measurement window. */
   fps: number;
-  /** Smoothed instantaneous FPS, for a readout that reacts quickly. */
   fpsInstant: number;
   avgMs: number;
   p50Ms: number;
@@ -43,16 +31,10 @@ export interface PerfSnapshot {
   over45Pct: number;
   /** Percentage of frames slower than 33ms. */
   over33Pct: number;
-  /** Smoothed CPU cost of the simulation, in ms per frame. */
   simMs: number;
-  /** Smoothed CPU cost of rendering, in ms per frame. */
   renderMs: number;
-  /**
-   * Smoothed total CPU time we spend inside the frame callback. Well below the
-   * frame interval means we are waiting on vsync rather than on our own work.
-   */
+  /** Total time inside the frame callback. Far below the interval means vsync-bound. */
   cpuMs: number;
-  /** Smoothed number of simulation ticks executed per frame. */
   ticksPerFrame: number;
   /** Intervals excluded as stalls rather than counted as slow frames. */
   stalls: number;
@@ -61,7 +43,7 @@ export interface PerfSnapshot {
 }
 
 export class PerfMonitor {
-  /** Ring buffer of recent frame intervals, for the live graph. */
+  /** Ring buffer of recent intervals, for the live graph. */
   readonly recent = new Float32Array(RECENT_SAMPLES);
   recentCursor = 0;
 
@@ -116,7 +98,6 @@ export class PerfMonitor {
     this.cpuEma += (cpu - this.cpuEma) * EMA_WEIGHT;
   }
 
-  /** Starts a fresh measurement window. Call this before a benchmark run. */
   reset(): void {
     this.histogram.fill(0);
     this.recent.fill(0);
@@ -132,8 +113,7 @@ export class PerfMonitor {
 
   snapshot(): PerfSnapshot {
     const frames = this.frames;
-    // Window length is the sum of measured intervals, not elapsed wall-clock
-    // time, so excluded stalls do not drag the average down.
+    // Sum of measured intervals, not wall clock, so stalls do not drag it down.
     const windowSeconds = this.intervalSum / 1000;
     return {
       fps: windowSeconds > 0 ? frames / windowSeconds : 0,

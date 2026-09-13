@@ -1,10 +1,7 @@
 /**
- * The pre-rendered static layer, drawn as a single textured quad.
- *
- * Terrain and road are painted once into an offscreen canvas at world
- * resolution and uploaded as a texture. Redrawing them then costs one draw call
- * regardless of how detailed the map is, instead of the few hundred fills and
- * wide strokes the naive renderer repeats every frame.
+ * The baked terrain texture, drawn as one quad. Costs a single draw call however
+ * detailed the map is, instead of the few hundred fills the naive renderer repeats
+ * every frame.
  */
 
 const VERTEX_SHADER = `#version 300 es
