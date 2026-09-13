@@ -277,13 +277,3 @@ scaling in health like everything else — no amount of anti-air could hold wave
 health curve as a whole outran the damage a fully built board can produce, which the
 diagnostic exposed as _every single leak being the same enemy type_.
 
-## Deployment
-
-The build is fully static and uses relative asset paths, so `dist/` can be served from any
-host or subdirectory. A GitHub Actions workflow in `.github/workflows/deploy.yml` builds
-and publishes to GitHub Pages on every push to `main`; enable Pages with "GitHub Actions"
-as the source and it deploys itself.
-
-## License
-
-Unlicensed assignment project.
