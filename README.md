@@ -83,24 +83,97 @@ minutes. Excluded stalls are shown in the overlay footer rather than hidden, and
 auto-pauses when the tab loses visibility so they should be rare. Anything below that
 threshold is reported in full, including genuine multi-hundred-millisecond GC pauses.
 
+## How to play
+
+Enemies walk a fixed road from the top-left spawn to your base at the bottom-right. You
+cannot fight them directly — you spend gold on towers beside the road, and towers acquire
+and shoot targets on their own. Anything that reaches the base costs you health; at zero
+health the run is over. Clear all 50 waves to win.
+
+Pick a tower from the shop, then click a buildable tile. Click an existing tower to
+inspect it and upgrade or sell it. Waves send themselves after a countdown, and sending
+one early pays a gold bonus, so there is a reason to press your luck.
+
+The three towers are meant to cover each other's weaknesses rather than rank against each
+other:
+
+| Tower           | Role                | Why you need it                                              |
+| --------------- | ------------------- | ------------------------------------------------------------ |
+| **Gun Turret**  | Rapid single target | Cheap and relentless, but flat armor eats most of each hit   |
+| **Mortar**      | Splash damage       | The answer to packed groups; too slow to track a lone runner |
+| **Frost Tower** | Slow support        | Almost no damage — it buys the other two more time in range  |
+
+The three enemies exist to punish a one-dimensional defence:
+
+| Enemy          | Trait                                                   |
+| -------------- | ------------------------------------------------------- |
+| **Grunt**      | Baseline; shows up in every wave                        |
+| **Runner**     | Fragile but very fast, so gaps in coverage leak         |
+| **Juggernaut** | Heavy armor, which makes rapid weak hits nearly useless |
+
+A boss arrives every tenth wave with a large health pool and a much heavier leak penalty.
+
 ## Keyboard shortcuts
 
 | Key         | Action                       |
 | ----------- | ---------------------------- |
+| `Q` `W` `E` | Select gun / mortar / frost  |
+| `Enter`     | Send the next wave early     |
+| `U` / `X`   | Upgrade / sell the selection |
+| `Escape`    | Clear the selection          |
 | `Space`     | Pause / resume               |
 | `1` `2` `3` | Game speed 1x / 2x / 4x      |
 | `P`         | Toggle performance overlay   |
 | `R`         | Reset the measurement window |
 
-## Planned structure
+## Baseline: the naive implementation
+
+The first implementation is deliberately written the way a tower defense is _first_
+written, and it is kept in the repository as the performance baseline the optimized
+version is measured against:
+
+- one heap object per enemy, tower, projectile, particle and damage number, in plain
+  arrays that are `splice`d as entities die;
+- every tower rescans every enemy on every tick to choose a target, with a real square
+  root per candidate, and splash damage rescans the list again;
+- the terrain, grid and path are redrawn from scratch every frame;
+- each entity issues its own `save`/`translate`/`beginPath`/`fill`/`restore`, and every
+  projectile sets `shadowBlur` individually;
+- a health bar is drawn for every enemy regardless of size, and nothing is culled.
+
+### Simulation cost, measured headlessly
+
+`npm run bench` runs the simulation with no renderer attached, which is the only way to
+tell whether the simulation or the drawing is the real problem:
+
+| Scenario        |   Enemies |  Towers | Projectiles | ms / tick | Share of a 60Hz frame |
+| --------------- | --------: | ------: | ----------: | --------: | --------------------: |
+| Real gameplay   |       150 |      20 |          40 |      0.03 |                    0% |
+| Busy late wave  |       400 |      45 |         120 |      0.05 |                    0% |
+| Light stress    |     1 000 |      60 |         250 |      0.20 |                    1% |
+| Heavy stress    |     2 500 |     100 |         500 |      0.80 |                    5% |
+| **Target load** | **5 000** | **100** |   **1 000** |  **1.68** |               **10%** |
+
+The result was not what I expected. The O(towers x enemies) target scan is 500 000
+distance checks per tick at the target load, and I assumed it would dominate — but a
+modern JIT chews through that in under 2ms, roughly a tenth of the frame budget. So the
+naive **simulation** is not what breaks; the naive **renderer**, which issues thousands of
+individual canvas state changes per frame, is. Measuring first meant not spending the
+optimization effort on the wrong half.
+
+Browser-side numbers for the full picture, including rendering, are collected with the
+in-game stress presets and are recorded with the optimization work.
+
+## Project structure
 
 ```
 src/
   game/
-    core/        # framerate-independent loop, math, RNG, pooling primitives
-    sim/         # the simulation: entities in typed arrays, waves, towers, combat
-    render/      # renderer interface + WebGL2 and Canvas 2D implementations
-    data/        # tower, enemy and wave tuning tables
+    core/        # loop, perf instrumentation, camera, math, seeded RNG
+    data/        # map and path, tower / enemy / wave tuning tables
+    naive/       # the baseline simulation and Canvas 2D renderer
+    render/      # canvas viewport and (later) the WebGL2 renderer
+    engine.ts    # the interface both implementations satisfy
   ui/            # React HUD, shop, panels, overlays
 ```
 

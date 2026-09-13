@@ -1,0 +1,301 @@
+/* Shared look for the floating panels that sit over the battlefield. */
+
+.panel {
+  border: 1px solid var(--c-border);
+  border-radius: calc(var(--radius) + 2px);
+  background: color-mix(in srgb, var(--c-surface) 90%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.panel__title {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+/* ── Tower shop ──────────────────────────────────────────────────────────── */
+
+.shop {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem;
+}
+
+.shop__card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 0 0.5rem;
+  width: 11.5rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-surface-raised);
+  text-align: left;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.shop__card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+}
+
+.shop__card:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.shop__card.is-active {
+  border-color: var(--c-accent);
+  background: color-mix(in srgb, var(--c-accent) 18%, var(--c-surface-raised));
+}
+
+.shop__swatch {
+  grid-row: 1 / -1;
+  align-self: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 5px;
+}
+
+.shop__name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.shop__hotkey {
+  padding: 0 0.25rem;
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--c-text-dim);
+}
+
+.shop__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  color: var(--c-text-dim);
+}
+
+.shop__cost {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--c-gold);
+}
+
+/* ── Selected tower ──────────────────────────────────────────────────────── */
+
+.tower-panel {
+  width: 14.5rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.tower-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tower-panel__swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 3px;
+}
+
+.tower-panel__name {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.tower-panel__level {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--c-text-dim);
+}
+
+.tower-panel__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px 0.6rem;
+  margin: 0 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.tower-panel__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.tower-panel__stat dt {
+  color: var(--c-text-dim);
+}
+
+.tower-panel__stat dd {
+  margin: 0;
+}
+
+.tower-panel__actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* ── Buttons shared by panels ────────────────────────────────────────────── */
+
+.action {
+  flex: 1;
+  padding: 0.42rem 0.6rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-surface-raised);
+  color: var(--c-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.action:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--c-accent) 60%, transparent);
+}
+
+.action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action--primary {
+  border-color: color-mix(in srgb, var(--c-good) 45%, transparent);
+  background: color-mix(in srgb, var(--c-good) 22%, var(--c-surface-raised));
+}
+
+.action--danger {
+  border-color: color-mix(in srgb, var(--c-health) 40%, transparent);
+  color: color-mix(in srgb, var(--c-health) 80%, var(--c-text));
+}
+
+.action__cost {
+  margin-left: 0.3rem;
+  font-family: var(--font-mono);
+  color: var(--c-gold);
+}
+
+/* ── Stress panel ────────────────────────────────────────────────────────── */
+
+.stress {
+  width: 15.5rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.stress__note {
+  margin: 0.35rem 0 0.5rem;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: var(--c-text-dim);
+}
+
+.stress__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stress__preset {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.stress__preset-detail {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: var(--c-text-dim);
+}
+
+/* ── End-of-run modal ────────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  width: 22rem;
+  padding: 1.6rem;
+  text-align: center;
+}
+
+.modal__eyebrow {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.modal__title {
+  margin: 0.3rem 0 1rem;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.modal__title--victory {
+  color: var(--c-good);
+}
+
+.modal__title--defeat {
+  color: var(--c-health);
+}
+
+.modal__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 1.3rem;
+}
+
+.modal__stat {
+  padding: 0.5rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+}
+
+.modal__stat-value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.modal__stat-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}

@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "bench": "BENCH=1 vitest run --reporter=verbose src/game/naive/naiveSim.bench.test.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

@@ -1,0 +1,115 @@
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+  padding: 0.4rem 0.9rem;
+  border-bottom: 1px solid var(--c-border);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--c-surface) 94%, transparent),
+    color-mix(in srgb, var(--c-bg) 70%, transparent)
+  );
+  backdrop-filter: blur(10px);
+}
+
+.hud__group {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.hud__group--stats {
+  flex: 1;
+}
+
+.hud__brand {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--c-accent);
+}
+
+.hud__stat {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 0 0.4rem;
+  min-width: 5.5rem;
+}
+
+.hud__label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.hud__value {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.hud__value em {
+  font-size: 0.7rem;
+  font-style: normal;
+  color: var(--c-text-dim);
+}
+
+.hud__stat--gold .hud__value {
+  color: var(--c-gold);
+}
+
+.hud__stat--critical .hud__value {
+  color: var(--c-health);
+}
+
+.hud__bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  margin-top: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+
+.hud__bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--c-accent);
+  transform-origin: left center;
+  /* Scaling a full-width bar avoids a layout pass on every HUD update. */
+  transition: scale 180ms ease-out;
+}
+
+.hud__bar-fill--health {
+  background: var(--c-health);
+}
+
+.hud__counters {
+  gap: 0.85rem;
+}
+
+.hud__counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+
+.hud__counter-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__counter-label {
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
