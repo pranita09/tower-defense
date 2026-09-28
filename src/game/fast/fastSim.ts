@@ -36,6 +36,7 @@ import {
   MAX_TOWER_LEVEL,
   SELL_REFUND_RATE,
   TOWER_DEFS,
+  planAffordableUpgrades,
   towerBuildCost,
   towerUpgradeCost,
 } from '../data/towers';
@@ -325,6 +326,31 @@ export class FastSim {
     this.tInvested[index] += cost;
     this.tLevel[index] += 1;
     return true;
+  }
+
+  previewUpgradeAll(): { count: number; cost: number } {
+    const towers = [];
+    for (let i = 0; i < this.towerCount; i += 1) {
+      towers.push({ typeId: this.tType[i], level: this.tLevel[i] });
+    }
+    const plan = planAffordableUpgrades(towers, this.gold);
+    return { count: plan.indices.length, cost: plan.cost };
+  }
+
+  upgradeAffordable(): number {
+    const towers = [];
+    for (let i = 0; i < this.towerCount; i += 1) {
+      towers.push({ typeId: this.tType[i], level: this.tLevel[i] });
+    }
+    const plan = planAffordableUpgrades(towers, this.gold);
+    for (const index of plan.indices) {
+      const cost = towerUpgradeCost(this.tType[index], this.tLevel[index]);
+      if (cost === null || this.gold < cost) continue;
+      this.gold -= cost;
+      this.tInvested[index] += cost;
+      this.tLevel[index] += 1;
+    }
+    return plan.indices.length;
   }
 
   sellSelected(): boolean {

@@ -5,6 +5,7 @@ import { PerfMonitor, type PerfSnapshot } from '../game/core/perf';
 import { SPEED_OPTIONS, type SpeedOption } from '../game/core/speed';
 import { loadHighScore, loadMuted, saveHighScore, saveMuted } from '../game/core/storage';
 import { TOWER_DEFS } from '../game/data/towers';
+import { isBossWave, isSurgeWave } from '../game/data/waves';
 import type {
   EngineMode,
   GameEngine,
@@ -68,7 +69,7 @@ export function GameView() {
   const [buildType, setBuildType] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState<SpeedOption>(1);
-  const [showPerf, setShowPerf] = useState(true);
+  const [showPerf, setShowPerf] = useState(false);
   const [showStress, setShowStress] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [banner, setBanner] = useState<string | null>(null);
@@ -148,7 +149,9 @@ export function GameView() {
       const audio = audioRef.current;
       if (next.wave > previous.wave) {
         audio.waveStart();
-        showBanner(`Wave ${next.wave}`);
+        if (isBossWave(next.wave)) showBanner(`Boss wave ${next.wave}`);
+        else if (isSurgeWave(next.wave)) showBanner(`Surge wave ${next.wave}`);
+        else showBanner(`Wave ${next.wave}`);
       }
       if (next.leaks > previous.leaks) audio.leak();
       if (next.phase !== previous.phase) {
@@ -242,6 +245,13 @@ export function GameView() {
   const upgrade = useCallback(() => {
     const done = engineRef.current?.upgradeSelected();
     if (done) audioRef.current.upgrade();
+    else audioRef.current.denied();
+    refresh();
+  }, [refresh]);
+
+  const upgradeAll = useCallback(() => {
+    const count = engineRef.current?.upgradeAffordable() ?? 0;
+    if (count > 0) audioRef.current.upgrade();
     else audioRef.current.denied();
     refresh();
   }, [refresh]);
@@ -420,6 +430,9 @@ export function GameView() {
         case 'KeyU':
           upgrade();
           break;
+        case 'KeyA':
+          upgradeAll();
+          break;
         case 'KeyX':
           sell();
           break;
@@ -471,6 +484,7 @@ export function GameView() {
     toggleMute,
     togglePause,
     upgrade,
+    upgradeAll,
   ]);
 
   useEffect(() => {
@@ -537,7 +551,10 @@ export function GameView() {
           <TowerPanel
             selected={state.selected}
             gold={state.gold}
+            upgradeAllCount={state.upgradeAllCount}
+            upgradeAllCost={state.upgradeAllCost}
             onUpgrade={upgrade}
+            onUpgradeAll={upgradeAll}
             onSell={sell}
           />
         </div>
@@ -554,9 +571,7 @@ export function GameView() {
             onClick={startWave}
             aria-keyshortcuts="Enter"
           >
-            {state?.phase === 'ready'
-              ? `Start wave ${Math.ceil(state.restSeconds)}s`
-              : 'Wave in progress'}
+            {state?.phase === 'ready' ? `Start wave ${Math.ceil(state.restSeconds)}s` : 'In wave'}
           </button>
 
           <ControlBar

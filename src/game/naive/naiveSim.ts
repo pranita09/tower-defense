@@ -29,6 +29,7 @@ import {
   MAX_TOWER_LEVEL,
   SELL_REFUND_RATE,
   TOWER_DEFS,
+  planAffordableUpgrades,
   towerBuildCost,
   towerUpgradeCost,
 } from '../data/towers';
@@ -290,6 +291,24 @@ export class NaiveSim {
     tower.invested += cost;
     tower.level += 1;
     return true;
+  }
+
+  previewUpgradeAll(): { count: number; cost: number } {
+    const plan = planAffordableUpgrades(this.towers, this.gold);
+    return { count: plan.indices.length, cost: plan.cost };
+  }
+
+  upgradeAffordable(): number {
+    const plan = planAffordableUpgrades(this.towers, this.gold);
+    for (const index of plan.indices) {
+      const tower = this.towers[index];
+      const cost = towerUpgradeCost(tower.typeId, tower.level);
+      if (cost === null || this.gold < cost) continue;
+      this.gold -= cost;
+      tower.invested += cost;
+      tower.level += 1;
+    }
+    return plan.indices.length;
   }
 
   sellSelected(): boolean {

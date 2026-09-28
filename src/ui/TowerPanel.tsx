@@ -5,11 +5,22 @@ import './panels.css';
 interface TowerPanelProps {
   selected: SelectedTowerInfo;
   gold: number;
+  upgradeAllCount: number;
+  upgradeAllCost: number;
   onUpgrade: () => void;
+  onUpgradeAll: () => void;
   onSell: () => void;
 }
 
-export function TowerPanel({ selected, gold, onUpgrade, onSell }: TowerPanelProps) {
+export function TowerPanel({
+  selected,
+  gold,
+  upgradeAllCount,
+  upgradeAllCost,
+  onUpgrade,
+  onUpgradeAll,
+  onSell,
+}: TowerPanelProps) {
   const def = TOWER_DEFS[selected.typeId];
   const maxed = selected.upgradeCost === null;
   const affordable = selected.upgradeCost !== null && gold >= selected.upgradeCost;
@@ -27,6 +38,11 @@ export function TowerPanel({ selected, gold, onUpgrade, onSell }: TowerPanelProp
           Lv {selected.level}/{MAX_TOWER_LEVEL}
         </span>
       </header>
+
+      <p className="tower-panel__blurb">{def.description}</p>
+      <p className="tower-panel__tip">
+        Best vs {def.bestVs}. {def.watchOut}.
+      </p>
 
       <dl className="tower-panel__stats">
         <Stat label="dmg" value={selected.damage.toFixed(0)} />
@@ -52,6 +68,17 @@ export function TowerPanel({ selected, gold, onUpgrade, onSell }: TowerPanelProp
         >
           {maxed ? 'Max level' : 'Upgrade'}
           {!maxed && <span className="action__cost">{selected.upgradeCost}</span>}
+        </button>
+        <button
+          className="action"
+          type="button"
+          disabled={upgradeAllCount === 0}
+          onClick={onUpgradeAll}
+          aria-keyshortcuts="A"
+          title="Upgrade every tower you can afford, cheapest first"
+        >
+          All {upgradeAllCount}
+          {upgradeAllCount > 0 && <span className="action__cost">{upgradeAllCost}</span>}
         </button>
         <button
           className="action action--danger"

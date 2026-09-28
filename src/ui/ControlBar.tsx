@@ -61,7 +61,7 @@ export function ControlBar({
         aria-keyshortcuts="0"
         title="Reset zoom and pan (0). Scroll to zoom, right-drag to pan."
       >
-        {zoom > 1.01 ? `${zoom.toFixed(1)}x view` : 'Fit'}
+        Fit
       </button>
 
       <button
@@ -72,7 +72,7 @@ export function ControlBar({
         aria-keyshortcuts="M"
         title="Toggle sound (M)"
       >
-        {muted ? 'Muted' : 'Sound'}
+        Sound
       </button>
 
       <button
@@ -81,7 +81,7 @@ export function ControlBar({
         onClick={onTogglePerf}
         aria-pressed={showPerf}
         aria-keyshortcuts="P"
-        title="Toggle performance overlay (P)"
+        title="Toggle performance overlay (P). Hidden during play."
       >
         Stats
       </button>

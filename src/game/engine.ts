@@ -44,6 +44,9 @@ export interface GameStateSnapshot {
   /** Enemies that reached the base this run. */
   leaks: number;
   selected: SelectedTowerInfo | null;
+  /** How many upgrades `upgradeAffordable` would apply with current gold. */
+  upgradeAllCount: number;
+  upgradeAllCost: number;
 }
 
 export interface StressRequest {
@@ -82,6 +85,8 @@ export interface GameEngine {
   selectAt(screenX: number, screenY: number): number | null;
   clearSelection(): void;
   upgradeSelected(): boolean;
+  /** Cheapest-first upgrades until gold runs out. Returns how many succeeded. */
+  upgradeAffordable(): number;
   sellSelected(): boolean;
 
   /** Ghost preview follows the cursor; pass null to hide it. */

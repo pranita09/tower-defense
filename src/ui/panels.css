@@ -20,21 +20,29 @@
 
 .shop {
   display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
   gap: 0.3rem;
-  padding: 0.35rem;
+  min-width: 0;
+  max-width: 54rem;
+  padding: 0.3rem;
 }
 
 .shop__card {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
-  gap: 0 0.4rem;
-  width: 8.9rem;
-  padding: 0.4rem 0.45rem;
+  column-gap: 0.32rem;
+  row-gap: 0.08rem;
+  flex: 1 1 9.6rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.38rem 0.36rem;
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
   background: var(--c-surface-raised);
   text-align: left;
+  overflow: hidden;
   transition:
     border-color 120ms ease,
     background 120ms ease;
@@ -57,54 +65,50 @@
 .shop__swatch {
   grid-row: 1 / -1;
   align-self: center;
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 0.95rem;
+  height: 0.95rem;
   border-radius: 4px;
 }
 
-.shop__name {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.3rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.shop__hotkey {
-  padding: 0 0.25rem;
-  border: 1px solid var(--c-border);
-  border-radius: 3px;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--c-text-dim);
-}
-
-.shop__meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.3rem;
-  font-size: 0.6rem;
-  color: var(--c-text-dim);
-}
-
+.shop__label,
 .shop__role {
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+.shop__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.shop__hotkey {
+  padding: 0 0.22rem;
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--c-text-dim);
+}
+
+.shop__role {
+  font-size: 0.58rem;
+  color: var(--c-text-dim);
+}
+
 .shop__cost {
   font-family: var(--font-mono);
+  font-size: 0.68rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--c-gold);
 }
 
 /* Selected tower */
 
 .tower-panel {
-  width: 14.5rem;
+  width: 16rem;
   padding: 0.7rem 0.8rem;
 }
 
@@ -133,6 +137,19 @@
   color: var(--c-text-dim);
 }
 
+.tower-panel__blurb,
+.tower-panel__tip {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--c-text-dim);
+}
+
+.tower-panel__tip {
+  margin-bottom: 0.55rem;
+  color: var(--c-text);
+}
+
 .tower-panel__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -158,6 +175,7 @@
 
 .tower-panel__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
 

@@ -21,20 +21,26 @@ import {
   unpackGreen,
   unpackRed,
 } from '../data/palette';
-import { TOWER_DEFS } from '../data/towers';
+import { TOWER_DEFS, TOWER_GUN, TOWER_RAILGUN } from '../data/towers';
 import {
   createAtlasCanvas,
   SHAPE_QUAD_SCALE,
   SPRITE_CIRCLE,
-  SPRITE_DIAMOND,
+  SPRITE_CORE,
   SPRITE_GLOW,
-  SPRITE_HEX,
+  SPRITE_GUN,
+  SPRITE_MORTAR,
+  SPRITE_FROST,
+  SPRITE_TESLA,
+  SPRITE_RAIL,
+  SPRITE_GRUNT,
+  SPRITE_RUNNER,
+  SPRITE_JUGGERNAUT,
+  SPRITE_WISP,
+  SPRITE_SPLITTER,
   SPRITE_PIXEL,
   SPRITE_RING,
   SPRITE_SHADOW,
-  SPRITE_SQUARE,
-  SPRITE_TOWER_BASE,
-  SPRITE_TRIANGLE,
   SPRITE_BARREL,
 } from '../render/atlas';
 import { BackgroundQuad } from '../render/backgroundQuad';
@@ -64,18 +70,26 @@ const MIN_BAR_RADIUS_PX = 5;
 function spriteForEnemy(typeId: number): number {
   switch (typeId) {
     case ENEMY_RUNNER:
-      return SPRITE_TRIANGLE;
+      return SPRITE_RUNNER;
     case ENEMY_ARMORED:
-      return SPRITE_SQUARE;
+      return SPRITE_JUGGERNAUT;
     case ENEMY_FLYER:
-      return SPRITE_DIAMOND;
+      return SPRITE_WISP;
     case ENEMY_SPLITTER:
-      return SPRITE_HEX;
+      return SPRITE_SPLITTER;
     case ENEMY_GRUNT:
     default:
-      return SPRITE_CIRCLE;
+      return SPRITE_GRUNT;
   }
 }
+
+const TOWER_SPRITES: readonly number[] = [
+  SPRITE_GUN,
+  SPRITE_MORTAR,
+  SPRITE_FROST,
+  SPRITE_TESLA,
+  SPRITE_RAIL,
+];
 
 /** Sprite id per enemy type, resolved once instead of per entity per frame. */
 const ENEMY_SPRITES: readonly number[] = ENEMY_DEFS.map((_, index) => spriteForEnemy(index));
@@ -183,16 +197,25 @@ export class FastRenderer {
   private pushBase(sim: FastSim): void {
     const fraction = Math.max(0, sim.health / sim.maxHealth);
     const color = fraction > 0.35 ? 0x4cc9f0 : COLOR_DANGER;
-    this.batch.push(SPRITE_GLOW, BASE_POSITION.x, BASE_POSITION.y, 34, 34, 0, color, 0.16);
-    this.batch.push(SPRITE_DIAMOND, BASE_POSITION.x, BASE_POSITION.y, 19, 21, 0, color, 1);
-    this.batch.push(SPRITE_RING, BASE_POSITION.x, BASE_POSITION.y, 27, 27, 0, color, 0.5);
+    this.batch.push(SPRITE_GLOW, BASE_POSITION.x, BASE_POSITION.y, 36, 36, 0, color, 0.2);
+    this.batch.push(SPRITE_CORE, BASE_POSITION.x, BASE_POSITION.y, 22, 22, 0, color, 1);
+    this.batch.push(SPRITE_RING, BASE_POSITION.x, BASE_POSITION.y, 28, 28, 0, color, 0.45);
   }
 
   private pushHover(hover: HoverState): void {
     const x = hover.col * TILE_SIZE + TILE_SIZE / 2;
     const y = hover.row * TILE_SIZE + TILE_SIZE / 2;
     const color = hover.valid ? TOWER_COLORS[hover.typeId] : COLOR_DANGER;
-    this.batch.push(SPRITE_TOWER_BASE, x, y, TILE_SIZE * 0.44, TILE_SIZE * 0.44, 0, color, 0.4);
+    this.batch.push(
+      TOWER_SPRITES[hover.typeId],
+      x,
+      y,
+      TILE_SIZE * 0.5,
+      TILE_SIZE * 0.5,
+      0,
+      color,
+      0.45
+    );
   }
 
   private pushTowers(sim: FastSim, selectedIndex: number): void {
@@ -202,24 +225,25 @@ export class FastRenderer {
       const y = sim.tY[i];
       const color = TOWER_COLORS[typeId];
 
-      this.batch.push(SPRITE_TOWER_BASE, x, y, TILE_SIZE * 0.42, TILE_SIZE * 0.42, 0, color, 1);
+      this.batch.push(TOWER_SPRITES[typeId], x, y, TILE_SIZE * 0.5, TILE_SIZE * 0.5, 0, color, 1);
 
-      // Recoil pushes the barrel back along its own facing.
       const recoil = sim.tRecoil[i] * 3;
       const rotation = sim.tRotation[i];
-      const barrelX = x - Math.cos(rotation) * recoil;
-      const barrelY = y - Math.sin(rotation) * recoil;
-      const length = 11 + sim.tLevel[i] * 2.5;
-      this.batch.push(
-        SPRITE_BARREL,
-        barrelX,
-        barrelY,
-        length,
-        7,
-        rotation,
-        TOWER_ACCENTS[typeId],
-        1
-      );
+      if (typeId === TOWER_GUN || typeId === TOWER_RAILGUN) {
+        const barrelX = x - Math.cos(rotation) * recoil;
+        const barrelY = y - Math.sin(rotation) * recoil;
+        const length = 11 + sim.tLevel[i] * 2.5;
+        this.batch.push(
+          SPRITE_BARREL,
+          barrelX,
+          barrelY,
+          length,
+          6.5,
+          rotation,
+          TOWER_ACCENTS[typeId],
+          1
+        );
+      }
 
       // Level pips, so upgrades are visible on the board itself.
       for (let pip = 0; pip < sim.tLevel[i]; pip += 1) {
@@ -275,7 +299,7 @@ export class FastRenderer {
             Math.PI / 2
           : 0;
 
-      const quad = radius * SHAPE_QUAD_SCALE;
+      const quad = radius * SHAPE_QUAD_SCALE * 1.55;
       this.batch.push(
         ENEMY_SPRITES[typeId],
         x,

@@ -59,6 +59,7 @@ export class FastEngine implements GameEngine {
 
   getState(): GameStateSnapshot {
     const sim = this.sim;
+    const upgradeAll = sim.previewUpgradeAll();
     return {
       phase: sim.phase,
       health: sim.health,
@@ -75,6 +76,8 @@ export class FastEngine implements GameEngine {
       projectileCount: sim.projectileCount,
       leaks: sim.leaks,
       selected: this.describeSelection(),
+      upgradeAllCount: upgradeAll.count,
+      upgradeAllCost: upgradeAll.cost,
     };
   }
 
@@ -134,6 +137,10 @@ export class FastEngine implements GameEngine {
 
   upgradeSelected(): boolean {
     return this.sim.upgradeSelected();
+  }
+
+  upgradeAffordable(): number {
+    return this.sim.upgradeAffordable();
   }
 
   sellSelected(): boolean {

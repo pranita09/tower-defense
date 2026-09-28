@@ -80,6 +80,24 @@ describe('economy', () => {
     expect(sim.upgradeSelected()).toBe(false);
     expect(sim.towers[0].level).toBe(sim.maxTowerLevel());
   });
+
+  it('upgrades every affordable tower cheapest first', () => {
+    const sim = new NaiveSim();
+    sim.gold = 10_000;
+    for (let row = 0, placed = 0; row < 22 && placed < 3; row += 1) {
+      for (let col = 0; col < 40 && placed < 3; col += 1) {
+        if (sim.canPlace(col, row)) {
+          sim.placeTower(col, row, TOWER_GUN);
+          placed += 1;
+        }
+      }
+    }
+    sim.gold = 90;
+    expect(sim.previewUpgradeAll().count).toBe(2);
+    expect(sim.upgradeAffordable()).toBe(2);
+    expect(sim.towers.reduce((sum, tower) => sum + tower.level, 0)).toBe(5);
+    expect(sim.gold).toBe(0);
+  });
 });
 
 describe('waves', () => {

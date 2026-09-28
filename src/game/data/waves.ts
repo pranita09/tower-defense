@@ -16,6 +16,16 @@ const FLYER_UNLOCK_WAVE = 6;
 const ARMORED_UNLOCK_WAVE = 7;
 const SPLITTER_UNLOCK_WAVE = 11;
 const BOSS_INTERVAL = 10;
+const SURGE_INTERVAL = 5;
+
+export function isBossWave(number: number): boolean {
+  return number % BOSS_INTERVAL === 0;
+}
+
+/** Every 5th wave that is not already a boss wave. */
+export function isSurgeWave(number: number): boolean {
+  return number % SURGE_INTERVAL === 0 && !isBossWave(number);
+}
 
 export interface WaveGroup {
   enemyId: number;
@@ -38,15 +48,18 @@ export interface WaveDef {
   bountyScale: number;
   /** Gold granted for clearing the wave. */
   reward: number;
+  surge: boolean;
 }
 
 function buildWave(number: number): WaveDef {
   const groups: WaveGroup[] = [];
-  const interval = Math.max(0.26, 0.82 - number * 0.011);
+  const surge = isSurgeWave(number);
+  const interval = Math.max(0.22, 0.82 - number * 0.011) * (surge ? 0.84 : 1);
+  const pack = surge ? 1.24 : 1;
 
   groups.push({
     enemyId: ENEMY_GRUNT,
-    count: 5 + Math.floor(number * 1.15),
+    count: Math.round((5 + Math.floor(number * 1.15)) * pack),
     interval,
     delay: 0,
     boss: false,
@@ -55,7 +68,7 @@ function buildWave(number: number): WaveDef {
   if (number >= RUNNER_UNLOCK_WAVE) {
     groups.push({
       enemyId: ENEMY_RUNNER,
-      count: 4 + Math.floor(number - RUNNER_UNLOCK_WAVE),
+      count: Math.round((4 + Math.floor(number - RUNNER_UNLOCK_WAVE)) * pack),
       interval: interval * 0.62,
       delay: 3.2,
       boss: false,
@@ -65,7 +78,7 @@ function buildWave(number: number): WaveDef {
   if (number >= FLYER_UNLOCK_WAVE) {
     groups.push({
       enemyId: ENEMY_FLYER,
-      count: 3 + Math.floor((number - FLYER_UNLOCK_WAVE) * 0.75),
+      count: Math.round((3 + Math.floor((number - FLYER_UNLOCK_WAVE) * 0.75)) * pack),
       interval: interval * 0.8,
       delay: 6.5,
       boss: false,
@@ -75,7 +88,7 @@ function buildWave(number: number): WaveDef {
   if (number >= ARMORED_UNLOCK_WAVE) {
     groups.push({
       enemyId: ENEMY_ARMORED,
-      count: 2 + Math.floor((number - ARMORED_UNLOCK_WAVE) * 0.55),
+      count: Math.round((2 + Math.floor((number - ARMORED_UNLOCK_WAVE) * 0.55)) * pack),
       interval: interval * 1.7,
       delay: 5.5,
       boss: false,
@@ -85,14 +98,14 @@ function buildWave(number: number): WaveDef {
   if (number >= SPLITTER_UNLOCK_WAVE) {
     groups.push({
       enemyId: ENEMY_SPLITTER,
-      count: 2 + Math.floor((number - SPLITTER_UNLOCK_WAVE) * 0.45),
+      count: Math.round((2 + Math.floor((number - SPLITTER_UNLOCK_WAVE) * 0.45)) * pack),
       interval: interval * 1.4,
       delay: 9,
       boss: false,
     });
   }
 
-  if (number % BOSS_INTERVAL === 0) {
+  if (isBossWave(number)) {
     groups.push({
       enemyId: ENEMY_ARMORED,
       count: Math.floor(number / BOSS_INTERVAL),
@@ -116,6 +129,7 @@ function buildWave(number: number): WaveDef {
     armorBonus: Math.floor(number / 9),
     bountyScale: 1 + (number - 1) * 0.06,
     reward: 22 + number * 4,
+    surge,
   };
 }
 

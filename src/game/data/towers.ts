@@ -35,6 +35,10 @@ export interface TowerDef {
   name: string;
   role: string;
   description: string;
+  /** Short “use this against…” line for the shop and title screen. */
+  bestVs: string;
+  /** Short “do not rely on this against…” line. */
+  watchOut: string;
   hotkey: string;
   kind: ProjectileKind;
   targetsAir: boolean;
@@ -74,7 +78,9 @@ export const TOWER_DEFS: readonly TowerDef[] = [
     id: 'gun',
     name: 'Gun Turret',
     role: 'Rapid single target',
-    description: 'Cheap and relentless. Great against runners, poor against armor.',
+    description: 'Cheap and relentless. Hits flying enemies. Your first line of defence.',
+    bestVs: 'Runners and Wisps',
+    watchOut: 'Juggernaut armor eats most of each shot',
     hotkey: 'Q',
     kind: 'bullet',
     targetsAir: true,
@@ -92,7 +98,9 @@ export const TOWER_DEFS: readonly TowerDef[] = [
     id: 'mortar',
     name: 'Mortar',
     role: 'Splash damage',
-    description: 'Heavy shells that damage everything near the impact. Ground only.',
+    description: 'Heavy shells that hit a whole pack at once. Cannot elevate, so flyers are safe.',
+    bestVs: 'Crowds and Splitters',
+    watchOut: 'Cannot hit Wisps at all',
     hotkey: 'W',
     kind: 'shell',
     targetsAir: false,
@@ -110,7 +118,9 @@ export const TOWER_DEFS: readonly TowerDef[] = [
     id: 'frost',
     name: 'Frost Tower',
     role: 'Slow support',
-    description: 'Barely scratches anything, but chills everything nearby to a crawl.',
+    description: 'Almost no damage. Chills nearby enemies so your other towers have more time.',
+    bestVs: 'Wisps and Runners (buys time)',
+    watchOut: 'Will not kill anything on its own',
     hotkey: 'E',
     kind: 'frost',
     targetsAir: true,
@@ -128,7 +138,9 @@ export const TOWER_DEFS: readonly TowerDef[] = [
     id: 'tesla',
     name: 'Tesla Coil',
     role: 'Anti-armor chain',
-    description: 'Arcs to several enemies at once and ignores armor. Short reach.',
+    description: 'Lightning ignores armor and jumps to nearby targets. Hits air. Short reach.',
+    bestVs: 'Juggernauts and packed Wisps',
+    watchOut: 'Very short range — place on corners',
     hotkey: 'R',
     kind: 'arc',
     targetsAir: true,
@@ -146,7 +158,9 @@ export const TOWER_DEFS: readonly TowerDef[] = [
     id: 'railgun',
     name: 'Railgun',
     role: 'Long-range burst',
-    description: 'Enormous single-target damage across the map. Hopeless against crowds.',
+    description: 'Huge single-target hits from half the map away. Hits air. Slow reload.',
+    bestVs: 'Bosses and Juggernauts',
+    watchOut: 'Too slow for crowds or Runners',
     hotkey: 'T',
     kind: 'slug',
     targetsAir: true,
@@ -176,6 +190,40 @@ export function towerUpgradeCost(typeId: number, level: number): number | null {
   const levels = TOWER_DEFS[typeId].levels;
   if (level >= levels.length) return null;
   return levels[level].cost;
+}
+
+export interface UpgradePlan {
+  indices: number[];
+  cost: number;
+}
+
+/** Cheapest-first upgrades until gold runs out. Same rules as a single upgrade. */
+export function planAffordableUpgrades(
+  towers: readonly { typeId: number; level: number }[],
+  gold: number
+): UpgradePlan {
+  const levels = towers.map((tower) => tower.level);
+  const indices: number[] = [];
+  let remaining = gold;
+  let cost = 0;
+
+  while (true) {
+    let best = -1;
+    let bestCost = Infinity;
+    for (let i = 0; i < towers.length; i += 1) {
+      const nextCost = towerUpgradeCost(towers[i].typeId, levels[i]);
+      if (nextCost === null || nextCost > remaining || nextCost >= bestCost) continue;
+      best = i;
+      bestCost = nextCost;
+    }
+    if (best < 0) break;
+    remaining -= bestCost;
+    cost += bestCost;
+    levels[best] += 1;
+    indices.push(best);
+  }
+
+  return { indices, cost };
 }
 
 /** Nominal damage per second, ignoring armor. For the info panel. */

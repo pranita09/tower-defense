@@ -19,7 +19,7 @@ describe('wave curve', () => {
   });
 
   it('gets harder every wave without exception', () => {
-    // Head count dips after a boss wave, so the invariant is on regular enemies.
+    // Head count dips after a boss or surge wave, so the invariant skips those.
     const regularEnemies = (wave: (typeof WAVES)[number]) =>
       wave.groups.reduce((total, group) => (group.boss ? total : total + group.count), 0);
 
@@ -27,10 +27,22 @@ describe('wave curve', () => {
       const previous = WAVES[i - 1];
       const wave = WAVES[i];
       expect(wave.healthScale).toBeGreaterThan(previous.healthScale);
-      expect(regularEnemies(wave)).toBeGreaterThanOrEqual(regularEnemies(previous));
       expect(wave.armorBonus).toBeGreaterThanOrEqual(previous.armorBonus);
       expect(wave.reward).toBeGreaterThan(previous.reward);
+      if (previous.surge || previous.groups.some((group) => group.boss)) continue;
+      expect(regularEnemies(wave)).toBeGreaterThanOrEqual(regularEnemies(previous));
     }
+  });
+
+  it('punches harder every fifth wave that is not a boss wave', () => {
+    for (const wave of WAVES) {
+      expect(wave.surge).toBe(wave.number % 5 === 0 && wave.number % 10 !== 0);
+    }
+    const surge = getWave(15);
+    const neighbour = getWave(16);
+    const count = (wave: (typeof WAVES)[number]) =>
+      wave.groups.reduce((total, group) => total + group.count, 0);
+    expect(count(surge)).toBeGreaterThan(count(neighbour));
   });
 
   it('ramps difficulty by orders of magnitude, not percent', () => {

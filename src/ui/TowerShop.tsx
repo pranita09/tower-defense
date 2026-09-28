@@ -7,6 +7,14 @@ interface TowerShopProps {
   onSelect: (typeId: number | null) => void;
 }
 
+function shopRole(role: string): string {
+  if (role === 'Rapid single target') return 'Rapid fire';
+  if (role === 'Splash damage') return 'Splash';
+  if (role === 'Anti-armor chain') return 'Anti-armor';
+  if (role === 'Long-range burst') return 'Long-range';
+  return role;
+}
+
 export function TowerShop({ gold, selectedType, onSelect }: TowerShopProps) {
   return (
     <div className="panel shop" role="group" aria-label="Tower shop">
@@ -23,18 +31,14 @@ export function TowerShop({ gold, selectedType, onSelect }: TowerShopProps) {
             disabled={!affordable}
             aria-pressed={active}
             aria-keyshortcuts={def.hotkey}
-            title={def.description}
+            title={`${def.description} Best vs ${def.bestVs}. ${def.watchOut}.`}
             onClick={() => onSelect(active ? null : typeId)}
           >
             <span className="shop__swatch" style={{ background: def.color }} aria-hidden="true" />
-            <span className="shop__name">
-              {def.name}
-              <span className="shop__hotkey">{def.hotkey}</span>
-            </span>
-            <span className="shop__meta">
-              <span className="shop__role">{def.role}</span>
-              <span className="shop__cost">{cost}</span>
-            </span>
+            <span className="shop__label">{def.name}</span>
+            <span className="shop__hotkey">{def.hotkey}</span>
+            <span className="shop__role">{shopRole(def.role)}</span>
+            <span className="shop__cost">{cost}</span>
           </button>
         );
       })}

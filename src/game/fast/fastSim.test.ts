@@ -111,6 +111,26 @@ describe('economy', () => {
     expect(sim.upgradeSelected()).toBe(false);
     expect(sim.tLevel[0]).toBe(MAX_TOWER_LEVEL);
   });
+
+  it('upgrades every affordable tower cheapest first', () => {
+    const sim = new FastSim();
+    sim.gold = 10_000;
+    const tiles: Array<{ col: number; row: number }> = [];
+    for (let row = 0; row < 22 && tiles.length < 3; row += 1) {
+      for (let col = 0; col < 40 && tiles.length < 3; col += 1) {
+        if (sim.canPlace(col, row)) {
+          sim.placeTower(col, row, TOWER_GUN);
+          tiles.push({ col, row });
+        }
+      }
+    }
+    sim.gold = 90;
+    const preview = sim.previewUpgradeAll();
+    expect(preview.count).toBe(2);
+    expect(sim.upgradeAffordable()).toBe(2);
+    expect(sim.tLevel[0] + sim.tLevel[1] + sim.tLevel[2]).toBe(5);
+    expect(sim.gold).toBe(0);
+  });
 });
 
 describe('waves', () => {

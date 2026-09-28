@@ -1,16 +1,13 @@
 /**
- * The sprite atlas, generated at startup rather than shipped as an image. One
- * texture for everything, because switching textures would force a draw call per
- * sprite type and undo the batching. Shapes are white with a grey rim so the
- * shader can tint them, letting one circle serve every enemy type.
+ * Sprite atlas, generated at startup. One texture for everything so the whole
+ * frame stays a single instanced draw. Shapes are white with a grey rim so the
+ * shader can tint them; silhouettes carry the character.
  */
 
-export const ATLAS_SIZE = 256;
+export const ATLAS_SIZE = 512;
 const CELL = 64;
 const CELLS_PER_ROW = ATLAS_SIZE / CELL;
-/** Content radius inside a cell, leaving room so filtering cannot bleed. */
 const CONTENT_RADIUS = 30;
-/** Quad half-extent needed to display a shape at a given logical radius. */
 export const SHAPE_QUAD_SCALE = CELL / 2 / CONTENT_RADIUS;
 
 export const SPRITE_PIXEL = 0;
@@ -24,9 +21,19 @@ export const SPRITE_TOWER_BASE = 7;
 export const SPRITE_BARREL = 8;
 export const SPRITE_RING = 9;
 export const SPRITE_SHADOW = 10;
-export const SPRITE_COUNT = 11;
+export const SPRITE_GRUNT = 11;
+export const SPRITE_RUNNER = 12;
+export const SPRITE_JUGGERNAUT = 13;
+export const SPRITE_WISP = 14;
+export const SPRITE_SPLITTER = 15;
+export const SPRITE_GUN = 16;
+export const SPRITE_MORTAR = 17;
+export const SPRITE_FROST = 18;
+export const SPRITE_TESLA = 19;
+export const SPRITE_RAIL = 20;
+export const SPRITE_CORE = 21;
+export const SPRITE_COUNT = 22;
 
-/** UV rectangles as [u0, v0, u1, v1], indexed by sprite id. */
 export const SPRITE_UVS: Float32Array = new Float32Array(SPRITE_COUNT * 4);
 
 const TAU = Math.PI * 2;
@@ -68,12 +75,18 @@ function paintShape(ctx: CanvasRenderingContext2D, id: number, draw: () => void)
   ctx.save();
   ctx.translate(x + CELL / 2, y + CELL / 2);
   ctx.fillStyle = '#ffffff';
-  // The rim is grey, so tinting turns it into a darker edge of the same hue.
   ctx.strokeStyle = '#8c8c8c';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   draw();
   ctx.restore();
   setUvs(id, 1);
+}
+
+function fillStroke(ctx: CanvasRenderingContext2D): void {
+  ctx.fill();
+  ctx.stroke();
 }
 
 export function createAtlasCanvas(): HTMLCanvasElement {
@@ -85,8 +98,6 @@ export function createAtlasCanvas(): HTMLCanvasElement {
 
   ctx.clearRect(0, 0, ATLAS_SIZE, ATLAS_SIZE);
 
-  // A solid block, sampled from the middle so health bars and beams have clean
-  // edges no matter how they are stretched.
   const pixelOrigin = cellOrigin(SPRITE_PIXEL);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(pixelOrigin.x, pixelOrigin.y, CELL, CELL);
@@ -95,34 +106,29 @@ export function createAtlasCanvas(): HTMLCanvasElement {
   paintShape(ctx, SPRITE_CIRCLE, () => {
     ctx.beginPath();
     ctx.arc(0, 0, CONTENT_RADIUS - 1.5, 0, TAU);
-    ctx.fill();
-    ctx.stroke();
+    fillStroke(ctx);
   });
 
   paintShape(ctx, SPRITE_SQUARE, () => {
     const size = (CONTENT_RADIUS - 1.5) * 1.72;
     ctx.beginPath();
     ctx.roundRect(-size / 2, -size / 2, size, size, 6);
-    ctx.fill();
-    ctx.stroke();
+    fillStroke(ctx);
   });
 
   paintShape(ctx, SPRITE_TRIANGLE, () => {
     polygon(ctx, 0, 0, CONTENT_RADIUS - 1.5, 3, -Math.PI / 2);
-    ctx.fill();
-    ctx.stroke();
+    fillStroke(ctx);
   });
 
   paintShape(ctx, SPRITE_DIAMOND, () => {
     polygon(ctx, 0, 0, CONTENT_RADIUS - 1.5, 4, -Math.PI / 2);
-    ctx.fill();
-    ctx.stroke();
+    fillStroke(ctx);
   });
 
   paintShape(ctx, SPRITE_HEX, () => {
     polygon(ctx, 0, 0, CONTENT_RADIUS - 1.5, 6, 0);
-    ctx.fill();
-    ctx.stroke();
+    fillStroke(ctx);
   });
 
   paintShape(ctx, SPRITE_TOWER_BASE, () => {
@@ -156,7 +162,6 @@ export function createAtlasCanvas(): HTMLCanvasElement {
     ctx.stroke();
   });
 
-  // Soft radial falloffs for glows and shadows.
   paintShape(ctx, SPRITE_GLOW, () => {
     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, CONTENT_RADIUS);
     gradient.addColorStop(0, 'rgba(255,255,255,1)');
@@ -175,6 +180,189 @@ export function createAtlasCanvas(): HTMLCanvasElement {
     ctx.fillStyle = gradient;
     ctx.beginPath();
     ctx.ellipse(0, 0, CONTENT_RADIUS, CONTENT_RADIUS * 0.45, 0, 0, TAU);
+    ctx.fill();
+  });
+
+  paintShape(ctx, SPRITE_GRUNT, () => {
+    ctx.beginPath();
+    ctx.arc(0, 3, 16, 0, TAU);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.roundRect(-14, -18, 28, 16, 5);
+    fillStroke(ctx);
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fillRect(-10, -12, 20, 5);
+    ctx.beginPath();
+    ctx.arc(-11, 10, 5, 0, TAU);
+    ctx.arc(11, 10, 5, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  paintShape(ctx, SPRITE_RUNNER, () => {
+    ctx.beginPath();
+    ctx.moveTo(0, -22);
+    ctx.lineTo(12, 4);
+    ctx.lineTo(7, 20);
+    ctx.lineTo(0, 12);
+    ctx.lineTo(-7, 20);
+    ctx.lineTo(-12, 4);
+    ctx.closePath();
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.moveTo(-8, 2);
+    ctx.lineTo(-18, 16);
+    ctx.moveTo(8, 2);
+    ctx.lineTo(18, 16);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -8, 4, 0, TAU);
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fill();
+  });
+
+  paintShape(ctx, SPRITE_JUGGERNAUT, () => {
+    ctx.beginPath();
+    ctx.roundRect(-18, -16, 36, 34, 4);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.roundRect(-22, -10, 10, 18, 3);
+    ctx.roundRect(12, -10, 10, 18, 3);
+    fillStroke(ctx);
+    ctx.fillStyle = '#6e6e6e';
+    ctx.fillRect(-10, -8, 20, 6);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-6, 8, 12, 8);
+  });
+
+  paintShape(ctx, SPRITE_WISP, () => {
+    ctx.beginPath();
+    ctx.ellipse(-16, 2, 10, 16, -0.5, 0, TAU);
+    ctx.ellipse(16, 2, 10, 16, 0.5, 0, TAU);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, TAU);
+    ctx.fillStyle = '#9a9a9a';
+    ctx.fill();
+  });
+
+  paintShape(ctx, SPRITE_SPLITTER, () => {
+    polygon(ctx, 0, 2, 16, 6, 0);
+    fillStroke(ctx);
+    for (const [x, y] of [
+      [0, -18],
+      [-16, 12],
+      [16, 12],
+    ] as const) {
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, TAU);
+      fillStroke(ctx);
+    }
+  });
+
+  paintShape(ctx, SPRITE_GUN, () => {
+    ctx.beginPath();
+    ctx.arc(0, 4, 16, 0, TAU);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.roundRect(-6, -22, 12, 20, 4);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.arc(0, 4, 6, 0, TAU);
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fill();
+  });
+
+  paintShape(ctx, SPRITE_MORTAR, () => {
+    ctx.beginPath();
+    ctx.roundRect(-16, 2, 32, 16, 6);
+    fillStroke(ctx);
+    ctx.save();
+    ctx.rotate(-0.55);
+    ctx.beginPath();
+    ctx.roundRect(-6, -24, 12, 28, 5);
+    fillStroke(ctx);
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(0, 8, 5, 0, TAU);
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fill();
+  });
+
+  paintShape(ctx, SPRITE_FROST, () => {
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (i / 6) * TAU;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * 22, Math.sin(angle) * 22);
+      ctx.lineWidth = 3.2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * 12, Math.sin(angle) * 12);
+      ctx.lineTo(
+        Math.cos(angle) * 12 + Math.cos(angle + 0.9) * 7,
+        Math.sin(angle) * 12 + Math.sin(angle + 0.9) * 7
+      );
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 7, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#8c8c8c';
+    ctx.lineWidth = 2.4;
+    fillStroke(ctx);
+  });
+
+  paintShape(ctx, SPRITE_TESLA, () => {
+    ctx.beginPath();
+    ctx.roundRect(-10, 8, 20, 12, 3);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.moveTo(-8, 8);
+    ctx.lineTo(-4, -6);
+    ctx.lineTo(4, -6);
+    ctx.lineTo(8, 8);
+    ctx.closePath();
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.arc(0, -12, 9, 0, TAU);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.arc(0, -12, 3.5, 0, TAU);
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fill();
+  });
+
+  paintShape(ctx, SPRITE_RAIL, () => {
+    ctx.beginPath();
+    ctx.roundRect(-8, 6, 16, 14, 3);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.roundRect(-4, -24, 8, 34, 3);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.roundRect(-7, -26, 14, 8, 2);
+    fillStroke(ctx);
+  });
+
+  paintShape(ctx, SPRITE_CORE, () => {
+    polygon(ctx, 0, 0, 22, 4, -Math.PI / 2);
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    fillStroke(ctx);
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, TAU);
+    ctx.fillStyle = '#7a7a7a';
     ctx.fill();
   });
 

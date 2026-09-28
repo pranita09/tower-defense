@@ -101,6 +101,8 @@ await page.waitForSelector('.start__play');
 check('title screen renders', true);
 await page.click('.start__play');
 await wait(600);
+await page.keyboard.press('KeyP');
+await wait(200);
 
 const booted = await read();
 check('optimized renderer is active', !booted.baselineBadge, 'WebGL2 unavailable');

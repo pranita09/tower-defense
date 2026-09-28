@@ -4,6 +4,7 @@ import {
   ENEMY_ARMORED,
   ENEMY_DEFS,
   ENEMY_FLYER,
+  ENEMY_GRUNT,
   ENEMY_RUNNER,
   ENEMY_SPLITTER,
 } from '../data/enemies';
@@ -146,19 +147,57 @@ export class NaiveRenderer {
       ctx.translate(tower.x, tower.y);
 
       ctx.beginPath();
-      ctx.roundRect(-12, -12, 24, 24, 5);
-      ctx.fillStyle = '#1b2536';
+      ctx.roundRect(-12, -12, 24, 24, 6);
+      ctx.fillStyle = '#151d2c';
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = tower === selected ? '#ffffff' : def.color;
       ctx.stroke();
 
       ctx.rotate(tower.rotation);
-      const recoil = tower.recoil * 3;
-      ctx.beginPath();
-      ctx.roundRect(2 - recoil, -3.5, 15, 7, 3);
       ctx.fillStyle = def.color;
-      ctx.fill();
+      if (tower.typeId === 1) {
+        ctx.beginPath();
+        ctx.roundRect(-11, 2, 22, 12, 4);
+        ctx.fill();
+        ctx.save();
+        ctx.rotate(-0.5);
+        ctx.fillRect(-4, -16, 8, 20);
+        ctx.restore();
+      } else if (tower.typeId === 2) {
+        for (let arm = 0; arm < 6; arm += 1) {
+          const angle = (arm / 6) * TAU;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(angle) * 13, Math.sin(angle) * 13);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = def.accent;
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, TAU);
+        ctx.fill();
+      } else if (tower.typeId === 3) {
+        ctx.beginPath();
+        ctx.moveTo(-7, 10);
+        ctx.lineTo(0, -8);
+        ctx.lineTo(7, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, -10, 6, 0, TAU);
+        ctx.fillStyle = def.accent;
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 3, 9, 0, TAU);
+        ctx.fill();
+        const recoil = tower.recoil * 3;
+        ctx.beginPath();
+        ctx.roundRect(2 - recoil, -3.5, tower.typeId === 4 ? 18 : 15, 7, 3);
+        ctx.fillStyle = def.accent;
+        ctx.fill();
+      }
 
       ctx.restore();
 
@@ -182,7 +221,6 @@ export class NaiveRenderer {
       ctx.translate(x, y);
 
       if (enemy.flying) {
-        // A shadow sells the fact that it is above the terrain.
         ctx.beginPath();
         ctx.ellipse(2, radius + 7, radius * 0.75, radius * 0.32, 0, 0, TAU);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
@@ -192,17 +230,21 @@ export class NaiveRenderer {
       ctx.beginPath();
       if (enemy.typeId === ENEMY_RUNNER) {
         ctx.moveTo(0, -radius);
-        ctx.lineTo(radius, radius * 0.85);
-        ctx.lineTo(-radius, radius * 0.85);
+        ctx.lineTo(radius * 0.85, radius * 0.2);
+        ctx.lineTo(radius * 0.45, radius);
+        ctx.lineTo(0, radius * 0.55);
+        ctx.lineTo(-radius * 0.45, radius);
+        ctx.lineTo(-radius * 0.85, radius * 0.2);
         ctx.closePath();
       } else if (enemy.typeId === ENEMY_ARMORED) {
         ctx.roundRect(-radius, -radius, radius * 2, radius * 2, 3);
       } else if (enemy.typeId === ENEMY_FLYER) {
-        ctx.moveTo(0, -radius);
-        ctx.lineTo(radius, 0);
-        ctx.lineTo(0, radius);
-        ctx.lineTo(-radius, 0);
-        ctx.closePath();
+        ctx.ellipse(-radius * 0.95, 0, radius * 0.55, radius * 0.9, -0.4, 0, TAU);
+        ctx.ellipse(radius * 0.95, 0, radius * 0.55, radius * 0.9, 0.4, 0, TAU);
+        ctx.fillStyle = `${def.color}99`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.72, 0, TAU);
       } else if (enemy.typeId === ENEMY_SPLITTER) {
         for (let corner = 0; corner < 6; corner += 1) {
           const angle = (corner / 6) * TAU;
@@ -213,13 +255,21 @@ export class NaiveRenderer {
         }
         ctx.closePath();
       } else {
-        ctx.arc(0, 0, radius, 0, TAU);
+        ctx.arc(0, 2, radius * 0.78, 0, TAU);
       }
       ctx.fillStyle = enemy.slowTimer > 0 ? '#7ad7ff' : def.color;
       ctx.fill();
       ctx.lineWidth = enemy.boss ? 3 : 1.5;
       ctx.strokeStyle = enemy.boss ? '#ffc94d' : 'rgba(8, 12, 20, 0.8)';
       ctx.stroke();
+
+      if (enemy.typeId === ENEMY_GRUNT) {
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.45)';
+        ctx.fillRect(-radius * 0.55, -radius * 0.35, radius * 1.1, radius * 0.28);
+      } else if (enemy.typeId === ENEMY_ARMORED) {
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.45)';
+        ctx.fillRect(-radius * 0.5, -radius * 0.35, radius, radius * 0.28);
+      }
       ctx.restore();
 
       // Every enemy, every frame, at any size.

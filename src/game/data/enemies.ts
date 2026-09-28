@@ -32,6 +32,8 @@ export interface EnemyDef {
   color: string;
   accent: string;
   description: string;
+  /** What to build against this type. */
+  counter: string;
 }
 
 export const ENEMY_DEFS: readonly EnemyDef[] = [
@@ -51,7 +53,8 @@ export const ENEMY_DEFS: readonly EnemyDef[] = [
     splitHealthFactor: 0,
     color: '#8f7fd8',
     accent: '#cdc2ff',
-    description: 'Baseline infantry. Shows up in every wave.',
+    description: 'Walks the road every wave. Average speed, health, and armor.',
+    counter: 'Any tower. Use guns early, mix in splash as packs grow.',
   },
   {
     id: 'runner',
@@ -69,7 +72,8 @@ export const ENEMY_DEFS: readonly EnemyDef[] = [
     splitHealthFactor: 0,
     color: '#5ddf8f',
     accent: '#c6ffdd',
-    description: 'Fragile but fast. Punishes gaps in your coverage.',
+    description: 'Fragile but very fast. Slips through holes in your coverage.',
+    counter: 'Guns along the whole road, or Frost to buy time.',
   },
   {
     id: 'armored',
@@ -87,7 +91,8 @@ export const ENEMY_DEFS: readonly EnemyDef[] = [
     splitHealthFactor: 0,
     color: '#c76b52',
     accent: '#ffb59b',
-    description: 'Heavy plating shrugs off rapid weak hits. Bring big guns.',
+    description: 'Heavy plating. Small gun shots barely scratch it.',
+    counter: 'Tesla (ignores armor) or Railgun. Mortars help in packs.',
   },
   {
     id: 'flyer',
@@ -107,7 +112,8 @@ export const ENEMY_DEFS: readonly EnemyDef[] = [
     splitHealthFactor: 0,
     color: '#ffd166',
     accent: '#fff2c9',
-    description: 'Flies straight over the terrain. Mortars cannot touch it.',
+    description: 'Flies a shortcut over the terrain. Mortars cannot hit it.',
+    counter: 'Gun, Frost, Tesla, or Railgun. Place them on the diagonal flight path.',
   },
   {
     id: 'splitter',
@@ -125,7 +131,8 @@ export const ENEMY_DEFS: readonly EnemyDef[] = [
     splitHealthFactor: 0.3,
     color: '#e56ba6',
     accent: '#ffc4de',
-    description: 'Bursts into three runners when killed. Kill it early.',
+    description: 'Bursts into three Runners when it dies. Killing it late is a mess.',
+    counter: 'Kill it early. Mortar splash cleans up the children.',
   },
 ];
 

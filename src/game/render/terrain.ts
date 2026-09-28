@@ -14,7 +14,7 @@ import {
  * share this function so the two modes look identical.
  */
 export function paintTerrain(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = '#111a27';
+  ctx.fillStyle = '#0d1520';
   ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
   for (let row = 0; row < GRID_ROWS; row += 1) {
@@ -22,8 +22,10 @@ export function paintTerrain(ctx: CanvasRenderingContext2D): void {
       if (!isBuildable(col, row)) continue;
       const x = col * TILE_SIZE;
       const y = row * TILE_SIZE;
-      ctx.fillStyle = (col + row) % 2 === 0 ? '#16202f' : '#141d2b';
+      ctx.fillStyle = (col + row) % 2 === 0 ? '#1a2838' : '#162230';
       ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1);
+      ctx.fillStyle = 'rgba(93, 223, 143, 0.05)';
+      ctx.fillRect(x + 2, y + 2, 4, 4);
     }
   }
 
@@ -34,17 +36,21 @@ export function paintTerrain(ctx: CanvasRenderingContext2D): void {
   ctx.moveTo(PATH[0].x, PATH[0].y);
   for (let i = 1; i < PATH.length; i += 1) ctx.lineTo(PATH[i].x, PATH[i].y);
 
-  ctx.strokeStyle = '#2a2016';
-  ctx.lineWidth = TILE_SIZE * 1.75;
+  ctx.strokeStyle = '#1a140e';
+  ctx.lineWidth = TILE_SIZE * 1.9;
   ctx.stroke();
 
-  ctx.strokeStyle = '#3d2f20';
-  ctx.lineWidth = TILE_SIZE * 1.45;
+  ctx.strokeStyle = '#3a2a1c';
+  ctx.lineWidth = TILE_SIZE * 1.55;
   ctx.stroke();
 
-  ctx.setLineDash([9, 13]);
-  ctx.strokeStyle = 'rgba(255, 201, 77, 0.16)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#5a4330';
+  ctx.lineWidth = TILE_SIZE * 1.15;
+  ctx.stroke();
+
+  ctx.setLineDash([10, 14]);
+  ctx.strokeStyle = 'rgba(255, 201, 77, 0.28)';
+  ctx.lineWidth = 2.2;
   ctx.stroke();
   ctx.setLineDash([]);
 }

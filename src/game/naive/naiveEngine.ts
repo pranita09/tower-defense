@@ -47,6 +47,7 @@ export class NaiveEngine implements GameEngine {
 
   getState(): GameStateSnapshot {
     const sim = this.sim;
+    const upgradeAll = sim.previewUpgradeAll();
     return {
       phase: sim.phase,
       health: sim.health,
@@ -63,6 +64,8 @@ export class NaiveEngine implements GameEngine {
       projectileCount: sim.projectiles.length,
       leaks: sim.leaks,
       selected: this.describeSelection(),
+      upgradeAllCount: upgradeAll.count,
+      upgradeAllCost: upgradeAll.cost,
     };
   }
 
@@ -143,6 +146,10 @@ export class NaiveEngine implements GameEngine {
 
   upgradeSelected(): boolean {
     return this.sim.upgradeSelected();
+  }
+
+  upgradeAffordable(): number {
+    return this.sim.upgradeAffordable();
   }
 
   sellSelected(): boolean {

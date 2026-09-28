@@ -1,3 +1,4 @@
+import { getWave, isBossWave } from '../game/data/waves';
 import type { GameStateSnapshot } from '../game/engine';
 import './Hud.css';
 
@@ -11,6 +12,9 @@ export function Hud({ state, highScore }: HudProps) {
 
   const healthFraction = Math.max(0, state.health / state.maxHealth);
   const waveFraction = state.waveTotal > 0 ? state.waveSpawned / state.waveTotal : 0;
+  const waveNumber = Math.max(1, state.wave);
+  const surge = getWave(waveNumber).surge;
+  const boss = isBossWave(waveNumber);
 
   return (
     <div className="hud">
@@ -44,10 +48,10 @@ export function Hud({ state, highScore }: HudProps) {
           {highScore > 0 && <span className="hud__sub">best {highScore.toLocaleString()}</span>}
         </div>
 
-        <div className="hud__stat hud__stat--wave">
-          <span className="hud__label">Wave</span>
+        <div className={`hud__stat hud__stat--wave${boss || surge ? ' hud__stat--marked' : ''}`}>
+          <span className="hud__label">{boss ? 'Boss' : surge ? 'Surge' : 'Wave'}</span>
           <span className="hud__value">
-            {Math.max(1, state.wave)}
+            {waveNumber}
             <em>/{state.totalWaves}</em>
           </span>
           <div className="hud__bar">
