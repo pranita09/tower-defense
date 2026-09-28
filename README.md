@@ -4,6 +4,8 @@ A tower defense game that runs in the browser. 50 waves, 5 towers, 5 enemy types
 
 Nothing to install and nothing to download at runtime.
 
+![SiegeBound start screen](assets/start-screen.jpg)
+
 It ships with **two versions of the same game**: the one I wrote first, and the one I wrote after measuring it. You can switch between them mid-game and watch the frame counter react.
 
 ```bash
